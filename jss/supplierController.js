@@ -1,6 +1,6 @@
 // supplierController.js
 
-import supabase from './supabaseClient';
+import supabase from '/supabaseClient';
 
 class SupplierController {
   // Obtener todos los proveedores
