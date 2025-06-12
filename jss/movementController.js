@@ -1,11 +1,13 @@
 // movementController.js
 
-import supabase from './supabaseClient';
+// js/movementController.js
+
+import supabase from './supabaseClient.js';
 
 class MovementController {
   // Obtener todas las entradas
   static async getAllEntries() {
-    const { data, error } = await supabase.from('entries').select(`
+    const { data, error } = await supabase.from('entradas').select(`
       id,
       product_id,
       supplier_id,
@@ -19,7 +21,7 @@ class MovementController {
 
   // Obtener todas las salidas
   static async getAllOutputs() {
-    const { data, error } = await supabase.from('outputs').select(`
+    const { data, error } = await supabase.from('salidas').select(`
       id,
       product_id,
       quantity,
@@ -33,7 +35,7 @@ class MovementController {
 
   // Añadir una entrada
   static async addEntry(entry) {
-    const { data, error } = await supabase.from('entries').insert([{
+    const { data, error } = await supabase.from('entradas').insert([{
       product_id: parseInt(entry.productId),
       supplier_id: parseInt(entry.supplierId),
       quantity: parseInt(entry.quantity),
@@ -46,7 +48,7 @@ class MovementController {
 
   // Añadir una salida
   static async addOutput(output) {
-    const { data, error } = await supabase.from('outputs').insert([{
+    const { data, error } = await supabase.from('salidas').insert([{
       product_id: parseInt(output.productId),
       quantity: parseInt(output.quantity),
       date: output.date,
@@ -59,7 +61,7 @@ class MovementController {
 
   // Filtrar entradas por rango de fechas
   static async getEntriesByDate(startDate, endDate) {
-    const { data, error } = await supabase.from('entries')
+    const { data, error } = await supabase.from('entradas')
       .select('*')
       .gte('date', startDate)
       .lte('date', endDate);
@@ -69,7 +71,7 @@ class MovementController {
 
   // Filtrar salidas por rango de fechas
   static async getOutputsByDate(startDate, endDate) {
-    const { data, error } = await supabase.from('outputs')
+    const { data, error } = await supabase.from('salidas')
       .select('*')
       .gte('date', startDate)
       .lte('date', endDate);
