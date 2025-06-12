@@ -1,67 +1,81 @@
-// Controlador de movimientos (entradas y salidas)
+// movementController.js
+
+import supabase from './supabaseClient';
+
 class MovementController {
-  static getAllEntries() {
-    return StorageController.getEntries();
+  // Obtener todas las entradas
+  static async getAllEntries() {
+    const { data, error } = await supabase.from('entries').select(`
+      id,
+      product_id,
+      supplier_id,
+      quantity,
+      date,
+      notes
+    `);
+    if (error) console.error("Error obteniendo entradas:", error.message);
+    return data || [];
   }
 
-  static getAllOutputs() {
-    return StorageController.getOutputs();
+  // Obtener todas las salidas
+  static async getAllOutputs() {
+    const { data, error } = await supabase.from('outputs').select(`
+      id,
+      product_id,
+      quantity,
+      date,
+      reason,
+      notes
+    `);
+    if (error) console.error("Error obteniendo salidas:", error.message);
+    return data || [];
   }
 
-  static addEntry(entry) {
-    const entries = this.getAllEntries();
-    const newEntry = {
-      id: entries.length ? Math.max(...entries.map(e => e.id)) + 1 : 1,
-      productId: parseInt(entry.productId),
-      supplierId: parseInt(entry.supplierId),
+  // Añadir una entrada
+  static async addEntry(entry) {
+    const { data, error } = await supabase.from('entries').insert([{
+      product_id: parseInt(entry.productId),
+      supplier_id: parseInt(entry.supplierId),
       quantity: parseInt(entry.quantity),
       date: entry.date,
       notes: entry.notes || ''
-    };
-    entries.push(newEntry);
-    StorageController.setEntries(entries);
-    ProductController.updateStock(newEntry.productId, newEntry.quantity);
-    return newEntry;
+    }]).select();
+    if (error) console.error("Error al guardar entrada:", error.message);
+    return data?.[0] || null;
   }
 
-  static addOutput(output) {
-    const outputs = this.getAllOutputs();
-    const newOutput = {
-      id: outputs.length ? Math.max(...outputs.map(o => o.id)) + 1 : 1,
-      productId: parseInt(output.productId),
+  // Añadir una salida
+  static async addOutput(output) {
+    const { data, error } = await supabase.from('outputs').insert([{
+      product_id: parseInt(output.productId),
       quantity: parseInt(output.quantity),
       date: output.date,
       reason: output.reason,
       notes: output.notes || ''
-    };
-    // Validar stock suficiente
-    const product = ProductController.getById(newOutput.productId);
-    if (product && product.stock < newOutput.quantity) {
-      throw new Error(`Stock insuficiente para ${product.name}`);
-    }
-    outputs.push(newOutput);
-    StorageController.setOutputs(outputs);
-    ProductController.updateStock(newOutput.productId, -newOutput.quantity);
-    return newOutput;
+    }]).select();
+    if (error) console.error("Error al guardar salida:", error.message);
+    return data?.[0] || null;
   }
 
-  static getRecentEntries(limit = 10) {
-    const entries = this.getAllEntries();
-    return entries.sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, limit);
+  // Filtrar entradas por rango de fechas
+  static async getEntriesByDate(startDate, endDate) {
+    const { data, error } = await supabase.from('entries')
+      .select('*')
+      .gte('date', startDate)
+      .lte('date', endDate);
+    if (error) console.error("Error al filtrar entradas:", error.message);
+    return data || [];
   }
 
-  static getRecentOutputs(limit = 10) {
-    const outputs = this.getAllOutputs();
-    return outputs.sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, limit);
-  }
-
-  static getByDate(startDate, endDate) {
-    const entries = this.getAllEntries().filter(e => {
-      return new Date(e.date) >= startDate && new Date(e.date) <= endDate;
-    });
-    const outputs = this.getAllOutputs().filter(o => {
-      return new Date(o.date) >= startDate && new Date(o.date) <= endDate;
-    });
-    return { entries, outputs };
+  // Filtrar salidas por rango de fechas
+  static async getOutputsByDate(startDate, endDate) {
+    const { data, error } = await supabase.from('outputs')
+      .select('*')
+      .gte('date', startDate)
+      .lte('date', endDate);
+    if (error) console.error("Error al filtrar salidas:", error.message);
+    return data || [];
   }
 }
+
+export default MovementController;
