@@ -1,51 +1,65 @@
-// Controlador de proveedores
+// supplierController.js
+
+import supabase from './supabaseClient';
+
 class SupplierController {
-  static getAll() {
-    return StorageController.getSuppliers();
+  // Obtener todos los proveedores
+  static async getAll() {
+    const { data, error } = await supabase.from('suppliers').select('*');
+    if (error) console.error("Error obteniendo proveedores:", error.message);
+    return data || [];
   }
 
-  static getById(id) {
-    const suppliers = this.getAll();
-    return suppliers.find(s => s.id === parseInt(id));
+  // Obtener un proveedor por ID
+  static async getById(id) {
+    const { data, error } = await supabase.from('suppliers')
+      .select('*')
+      .eq('id', id)
+      .single();
+    if (error) console.error("Error obteniendo proveedor:", error.message);
+    return data || null;
   }
 
-  static add(supplier) {
-    const suppliers = this.getAll();
-    const newSupplier = {
-      id: suppliers.length ? Math.max(...suppliers.map(s => s.id)) + 1 : 1,
+  // Añadir un nuevo proveedor
+  static async add(supplier) {
+    const { data, error } = await supabase.from('suppliers').insert([{
       name: supplier.name,
       contact: supplier.contact,
       email: supplier.email || '',
       phone: supplier.phone || '',
       credit: parseFloat(supplier.credit || 0),
       materials: supplier.materials || ''
-    };
-    suppliers.push(newSupplier);
-    StorageController.setSuppliers(suppliers);
-    return newSupplier;
+    }]).select();
+    if (error) console.error("Error al agregar proveedor:", error.message);
+    return data?.[0] || null;
   }
 
-  static update(id, updatedSupplier) {
-    const suppliers = this.getAll();
-    const index = suppliers.findIndex(s => s.id === parseInt(id));
-    if (index !== -1) {
-      suppliers[index] = {
-        ...suppliers[index],
+  // Actualizar un proveedor existente
+  static async update(id, updatedSupplier) {
+    const { data, error } = await supabase.from('suppliers')
+      .update({
         name: updatedSupplier.name,
         contact: updatedSupplier.contact,
         email: updatedSupplier.email,
         phone: updatedSupplier.phone,
-        credit: parseFloat(updatedSupplier.credit),
+        credit: parseFloat(updatedSupplier.credit || 0),
         materials: updatedSupplier.materials
-      };
-      StorageController.setSuppliers(suppliers);
-      return suppliers[index];
-    }
-    return null;
+      })
+      .eq('id', id)
+      .select();
+    if (error) console.error("Error al actualizar proveedor:", error.message);
+    return data?.[0] || null;
   }
 
-  static delete(id) {
-    const suppliers = this.getAll().filter(s => s.id !== parseInt(id));
-    StorageController.setSuppliers(suppliers);
+  // Eliminar un proveedor por ID
+  static async delete(id) {
+    const { error } = await supabase.from('suppliers').delete().eq('id', id);
+    if (error) {
+      console.error("Error al eliminar proveedor:", error.message);
+      return false;
+    }
+    return true;
   }
 }
+
+export default SupplierController;
