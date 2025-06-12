@@ -19,3 +19,5 @@ document.addEventListener("DOMContentLoaded", async () => {
   const outputs = await MovementController.getAllOutputs();
   console.log("Entradas:", entries);
   console.log("Salidas:", outputs);
+
+});
