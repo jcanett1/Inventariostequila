@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Productos - InventoryPro</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"  rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+    <div class="container">
+      <a class="navbar-brand" href="index.html">InventoryPro</a>
+      <a class="btn btn-outline-light" href="index.html">Volver</a>
+    </div>
+  </nav>
+
+  <div class="container my-4">
+    <div class="row">
+      <div class="col-md-4 mb-4">
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <span>Agregar Producto</span>
+            <span class="badge bg-primary">Nuevo</span>
+          </div>
+          <div class="card-body">
+            <form id="productoForm">
+              <div class="mb-3">
+                <label for="nombreProducto" class="form-label">Nombre *</label>
+                <input type="text" class="form-control" id="nombreProducto" required>
+              </div>
+              <div class="mb-3">
+                <label for="descripcionProducto" class="form-label">Descripción</label>
+                <textarea class="form-control" id="descripcionProducto" rows="2"></textarea>
+              </div>
+              <div class="mb-3">
+                <label for="categoriaProducto" class="form-label">Categoría *</label>
+                <select class="form-select" id="categoriaProducto" required>
+                  <option value="" selected disabled>Selecciona una categoría</option>
+                  <option value="Electrónicos">Electrónicos</option>
+                  <option value="Alimentos">Alimentos</option>
+                  <option value="Ropa">Ropa</option>
+                  <option value="Hogar">Hogar</option>
+                  <option value="Otros">Otros</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label for="precioProducto" class="form-label">Precio Unitario *</label>
+                <div class="input-group">
+                  <span class="input-group-text">$</span>
+                  <input type="number" class="form-control" id="precioProducto" min="0" step="0.01" required>
+                </div>
+              </div>
+              <div class="d-grid">
+                <button type="submit" class="btn btn-primary">Guardar Producto</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-8">
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <span>Lista de Productos</span>
+            <div class="input-group input-group-sm" style="width: 200px;">
+              <input type="text" class="form-control" placeholder="Buscar..." id="buscarProducto">
+              <span class="input-group-text"><i class="fas fa-search"></i></span>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover align-middle">
+                <thead>
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Categoría</th>
+                    <th>Precio</th>
+                    <th>Stock</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="productosTableBody">
+                  <!-- Cargado dinámicamente -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Editar Producto -->
+  <div class="modal fade" id="editProductoModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Editar Producto</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="editProductoForm">
+            <input type="hidden" id="editProductoId">
+            <div class="mb-3">
+              <label for="editNombreProducto" class="form-label">Nombre *</label>
+              <input type="text" class="form-control" id="editNombreProducto" required>
+            </div>
+            <div class="mb-3">
+              <label for="editDescripcionProducto" class="form-label">Descripción</label>
+              <textarea class="form-control" id="editDescripcionProducto" rows="2"></textarea>
+            </div>
+            <div class="mb-3">
+              <label for="editCategoriaProducto" class="form-label">Categoría *</label>
+              <select class="form-select" id="editCategoriaProducto" required>
+                <option value="Electrónicos">Electrónicos</option>
+                <option value="Alimentos">Alimentos</option>
+                <option value="Ropa">Ropa</option>
+                <option value="Hogar">Hogar</option>
+                <option value="Otros">Otros</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="editPrecioProducto" class="form-label">Precio Unitario *</label>
+              <div class="input-group">
+                <span class="input-group-text">$</span>
+                <input type="number" class="form-control" id="editPrecioProducto" min="0" step="0.01" required>
+              </div>
+            </div>
+            <div class="d-grid">
+              <button type="button" class="btn btn-primary" id="saveEditProducto">Guardar Cambios</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script> 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script> 
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script> 
+  <script src="js/storageController.js"></script>
+  <script src="js/productController.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
