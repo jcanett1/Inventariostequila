@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Proveedores - InventoryPro</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"  rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+    <div class="container">
+      <a class="navbar-brand" href="index.html">InventoryPro</a>
+      <a class="btn btn-outline-light" href="index.html">Volver</a>
+    </div>
+  </nav>
+
+  <div class="container my-4">
+    <h2 class="mb-4">Gestión de Proveedores</h2>
+
+    <div class="row">
+      <div class="col-md-4 mb-4">
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            Registrar Proveedor
+            <span class="badge bg-primary">Nuevo</span>
+          </div>
+          <div class="card-body">
+            <form id="proveedorForm">
+              <div class="mb-3">
+                <label for="nombreProveedor" class="form-label">Nombre *</label>
+                <input type="text" class="form-control" id="nombreProveedor" required>
+              </div>
+              <div class="mb-3">
+                <label for="contactoProveedor" class="form-label">Contacto *</label>
+                <input type="text" class="form-control" id="contactoProveedor" required>
+              </div>
+              <div class="mb-3">
+                <label for="emailProveedor" class="form-label">Email</label>
+                <input type="email" class="form-control" id="emailProveedor">
+              </div>
+              <div class="mb-3">
+                <label for="telefonoProveedor" class="form-label">Teléfono</label>
+                <input type="tel" class="form-control" id="telefonoProveedor">
+              </div>
+              <div class="mb-3">
+                <label for="creditoProveedor" class="form-label">Crédito Disponible</label>
+                <div class="input-group">
+                  <span class="input-group-text">$</span>
+                  <input type="number" class="form-control" id="creditoProveedor" min="0" step="0.01">
+                </div>
+              </div>
+              <div class="mb-3">
+                <label for="materialesProveedor" class="form-label">Materiales</label>
+                <textarea class="form-control" id="materialesProveedor" rows="2"></textarea>
+              </div>
+              <div class="d-grid">
+                <button type="submit" class="btn btn-primary">Guardar Proveedor</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-8">
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            Lista de Proveedores
+            <div class="input-group input-group-sm" style="width: 200px;">
+              <input type="text" class="form-control" placeholder="Buscar..." id="buscarProveedor">
+              <span class="input-group-text"><i class="fas fa-search"></i></span>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover align-middle">
+                <thead>
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Contacto</th>
+                    <th>Email</th>
+                    <th>Teléfono</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="proveedoresTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Editar Proveedor -->
+  <div class="modal fade" id="editProveedorModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Editar Proveedor</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="editProveedorForm">
+            <input type="hidden" id="editProveedorId">
+            <div class="mb-3">
+              <label for="editNombreProveedor" class="form-label">Nombre *</label>
+              <input type="text" class="form-control" id="editNombreProveedor" required>
+            </div>
+            <div class="mb-3">
+              <label for="editContactoProveedor" class="form-label">Contacto *</label>
+              <input type="text" class="form-control" id="editContactoProveedor" required>
+            </div>
+            <div class="mb-3">
+              <label for="editEmailProveedor" class="form-label">Email</label>
+              <input type="email" class="form-control" id="editEmailProveedor">
+            </div>
+            <div class="mb-3">
+              <label for="editTelefonoProveedor" class="form-label">Teléfono</label>
+              <input type="tel" class="form-control" id="editTelefonoProveedor">
+            </div>
+            <div class="mb-3">
+              <label for="editCreditoProveedor" class="form-label">Crédito Disponible</label>
+              <div class="input-group">
+                <span class="input-group-text">$</span>
+                <input type="number" class="form-control" id="editCreditoProveedor" min="0" step="0.01">
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="editMaterialesProveedor" class="form-label">Materiales</label>
+              <textarea class="form-control" id="editMaterialesProveedor" rows="2"></textarea>
+            </div>
+            <div class="d-grid">
+              <button type="button" class="btn btn-primary" id="saveEditProveedor">Guardar Cambios</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script> 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script> 
+  <script src="js/storageController.js"></script>
+  <script src="js/supplierController.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
