@@ -1,58 +1,45 @@
-// Controlador de productos
+import supabase from './supabaseClient';
+
 class ProductController {
-  static getAll() {
-    return StorageController.getProducts();
+  static async getAll() {
+    const { data, error } = await supabase.from('products').select('*');
+    if (error) console.error(error);
+    return data || [];
   }
 
-  static getById(id) {
-    const products = this.getAll();
-    return products.find(p => p.id === parseInt(id));
-  }
-
-  static add(product) {
-    const products = this.getAll();
-    const newProduct = {
-      id: products.length ? Math.max(...products.map(p => p.id)) + 1 : 1,
+  static async add(product) {
+    const { data, error } = await supabase.from('products').insert([{
       name: product.name,
       description: product.description,
       category: product.category,
-      price: parseFloat(product.price),
-      stock: parseInt(product.stock || 0)
-    };
-    products.push(newProduct);
-    StorageController.setProducts(products);
-    return newProduct;
+      price: product.price,
+      stock: product.stock || 0
+    }]).select();
+    if (error) console.error(error);
+    return data?.[0] || null;
   }
 
-  static update(id, updatedProduct) {
-    const products = this.getAll();
-    const index = products.findIndex(p => p.id === parseInt(id));
-    if (index !== -1) {
-      products[index] = {
-        ...products[index],
+  static async update(id, updatedProduct) {
+    const { data, error } = await supabase
+      .from('products')
+      .update({
         name: updatedProduct.name,
         description: updatedProduct.description,
         category: updatedProduct.category,
-        price: parseFloat(updatedProduct.price),
-        stock: parseInt(updatedProduct.stock)
-      };
-      StorageController.setProducts(products);
-      return products[index];
-    }
-    return null;
+        price: updatedProduct.price,
+        stock: updatedProduct.stock
+      })
+      .eq('id', id)
+      .select();
+    if (error) console.error(error);
+    return data?.[0] || null;
   }
 
-  static delete(id) {
-    const products = this.getAll().filter(p => p.id !== parseInt(id));
-    StorageController.setProducts(products);
-  }
-
-  static updateStock(productId, quantity) {
-    const products = this.getAll();
-    const index = products.findIndex(p => p.id === parseInt(productId));
-    if (index !== -1) {
-      products[index].stock += parseInt(quantity);
-      StorageController.setProducts(products);
-    }
+  static async delete(id) {
+    const { error } = await supabase.from('products').delete().eq('id', id);
+    if (error) console.error(error);
+    return !error;
   }
 }
+
+export default ProductController;
