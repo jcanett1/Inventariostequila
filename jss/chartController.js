@@ -1,10 +1,9 @@
-// js/chartController.js
-
-import Chart from 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js'; 
+// chartController.js
 
 class ChartController {
   static initCategoryChart(data) {
-    new Chart(document.getElementById('stockByCategory'), {
+    const ctx = document.getElementById('stockByCategory');
+    new Chart(ctx, {
       type: 'pie',
       data: {
         labels: Object.keys(data),
@@ -54,4 +53,4 @@ class ChartController {
   }
 }
 
-export default ChartController;
+window.ChartController = ChartController;
