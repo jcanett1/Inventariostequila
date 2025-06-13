@@ -1,25 +1,29 @@
-// Función principal de inicialización de datos
+// js/app.js
+
 import * as ProductController from './productController.js';
 import * as SupplierController from './supplierController.js';
 import * as MovementController from './movementController.js';
+import * as UIController from './uiController.js';
 
-document.addEventListener("DOMContentLoaded", () => {
-  console.log("Cargando productos...");
+document.addEventListener("DOMContentLoaded", async () => {
   try {
-    const products = ProductController.getAll(); // Aquí es donde ocurre el error
+    console.log("Cargando productos...");
+    const products = ProductController.getAll(); // Síncrono si usas localStorage
     console.log("Productos:", products);
+
+    console.log("Cargando proveedores...");
+    const suppliers = SupplierController.getAll();
+    console.log("Proveedores:", suppliers);
+
+    console.log("Cargando movimientos...");
+    const entries = MovementController.getAllEntries();
+    const outputs = MovementController.getAllOutputs();
+    console.log("Entradas:", entries);
+    console.log("Salidas:", outputs);
+
+    // Renderiza datos iniciales
+    UIController.init();
   } catch (e) {
-    console.error("Error al obtener productos:", e.message);
+    console.error("Error durante la inicialización:", e.message);
   }
-
-  // Cargar proveedores
-  const suppliers = await SupplierController.getAll();
-  console.log("Proveedores cargados:", suppliers);
-
-  // Cargar movimientos
-  const entries = await MovementController.getAllEntries();
-  const outputs = await MovementController.getAllOutputs();
-  console.log("Entradas:", entries);
-  console.log("Salidas:", outputs);
-
 });
