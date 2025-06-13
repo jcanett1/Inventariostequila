@@ -4,14 +4,26 @@ import * as ProductController from './productController.js';
 import * as SupplierController from './supplierController.js';
 import * as MovementController from './movementController.js';
 
-class UIController {
-  static async loadProductsTable() {
+
+const UIController = {
+  async init() {
+    console.log("Inicializando sistema...");
+
+    await this.loadProductsTable();
+    await this.loadSuppliersTable();
+    await this.loadEntriesTable();
+    await this.loadOutputsTable();
+    await this.updateCategoryChart();
+    await this.updateMovementsChart();
+  },
+
+  async loadProductsTable() {
     const tbody = document.getElementById("productosTableBody");
     const products = await ProductController.getAll();
     tbody.innerHTML = "";
 
     if (!products.length) {
-      tbody.innerHTML = `<tr><td colspan="5">No hay productos</td></tr>`;
+      tbody.innerHTML = "<tr><td colspan='5'>No hay productos</td></tr>";
       return;
     }
 
@@ -29,24 +41,77 @@ class UIController {
       `;
       tbody.appendChild(row);
     });
+  },
 
-    // Eventos de editar y eliminar
-    document.querySelectorAll(".delete-product").forEach(btn => {
-      btn.addEventListener("click", async (e) => {
-        const id = parseInt(e.target.dataset.id);
-        await ProductController.delete(id);
-        this.loadProductsTable();
-      });
+  async loadSuppliersTable() {
+    const tbody = document.getElementById("proveedoresTableBody");
+    const suppliers = await SupplierController.getAll();
+    tbody.innerHTML = "";
+
+    if (!suppliers.length) {
+      tbody.innerHTML = "<tr><td colspan='5'>No hay proveedores</td></tr>";
+      return;
+    }
+
+    suppliers.forEach(s => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${s.nombre}</td>
+        <td>${s.contacto}</td>
+        <td>$${parseFloat(s.credito).toFixed(2)}</td>
+        <td>${s.materiales || "Sin especificar"}</td>
+        <td>
+          <button class="btn btn-sm btn-outline-primary edit-supplier" data-id="${s.id}">Editar</button>
+          <button class="btn btn-sm btn-outline-danger delete-supplier" data-id="${s.id}">Eliminar</button>
+        </td>
+      `;
+      tbody.appendChild(row);
     });
-  }
+  },
 
-  static async init() {
-    const products = await ProductController.getAll();
-    console.log("Productos cargados:", products);
+  async loadEntriesTable() {
+    const tbody = document.getElementById("entradasTableBody");
+    const entries = await MovementController.getAllEntries();
+    tbody.innerHTML = "";
 
-    // Cargar tabla de productos
-    this.loadProductsTable();
-  }
-}
+    if (!entries.length) {
+      tbody.innerHTML = "<tr><td colspan='5'>No hay entradas</td></tr>";
+      return;
+    }
 
-export default UIController;
+    entries.forEach(e => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${e.date}</td>
+        <td>${e.productId}</td>
+        <td>${e.supplierId}</td>
+        <td>${e.quantity}</td>
+        <td>${e.notes || "-"}</td>
+      `;
+      tbody.appendChild(row);
+    });
+  },
+
+  async loadOutputsTable() {
+    const tbody = document.getElementById("salidasTableBody");
+    const outputs = await MovementController.getAllOutputs();
+    tbody.innerHTML = "";
+
+    if (!outputs.length) {
+      tbody.innerHTML = "<tr><td colspan='5'>No hay salidas</td></tr>";
+      return;
+    }
+
+    outputs.forEach(o => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${o.date}</td>
+        <td>${o.productId}</td>
+        <td>${o.quantity}</td>
+        <td>${o.reason}</td>
+        <td>${o.notes || "-"}</td>
+      `;
+      tbody.appendChild(row);
+    });
+  },
+};
