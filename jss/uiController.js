@@ -5,7 +5,7 @@
 import * as ProductController from './productController.js';
 import * as SupplierController from './supplierController.js';
 import * as MovementController from './movementController.js';
-import ChartController from './chartController.js';
+
 
 class UIController {
   static async init() {
