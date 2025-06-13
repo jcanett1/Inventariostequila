@@ -3,6 +3,7 @@
 import * as ProductController from './productController.js';
 import * as SupplierController from './supplierController.js';
 import * as MovementController from './movementController.js';
+import * as ChartController from './chartController.js';
 
 
 const UIController = {
