@@ -1,20 +1,18 @@
-// jss/uiController.js
-
 // js/uiController.js
 
 import * as ProductController from './productController.js';
 import * as SupplierController from './supplierController.js';
 import * as MovementController from './movementController.js';
-
+import ChartController from './chartController.js';
 
 class UIController {
   static async init() {
-    console.log("Inicializando sistema...");
     await this.loadProductsTable();
     await this.loadSuppliersTable();
     await this.loadMovementsTab();
     await this.updateCategoryChart();
     await this.updateMovementsChart(30);
+    await this.loadLowStockTable();
   }
 
   static async loadProductsTable() {
@@ -43,58 +41,6 @@ class UIController {
     });
   }
 
-  static async loadSuppliersTable() {
-    const tbody = document.getElementById("proveedoresTableBody");
-    const suppliers = await SupplierController.getAll();
-    tbody.innerHTML = "";
-
-    if (!suppliers.length) {
-      tbody.innerHTML = "<tr><td colspan='5'>No hay proveedores</td></tr>";
-      return;
-    }
-
-    suppliers.forEach(s => {
-      const row = document.createElement("tr");
-      row.innerHTML = `
-        <td>${s.nombre}</td>
-        <td>${s.contacto}</td>
-        <td>${s.correo || "-"}</td>
-        <td>${s.telefono || "-"}</td>
-        <td>
-          <button class="btn btn-sm btn-outline-primary edit-supplier" data-id="${s.id}">Editar</button>
-          <button class="btn btn-sm btn-outline-danger delete-supplier" data-id="${s.id}">Eliminar</button>
-        </td>
-      `;
-      tbody.appendChild(row);
-    });
-  }
-
-  static async loadMovementsTab() {
-    const productSelect = document.getElementById("productoEntrada");
-    const supplierSelect = document.getElementById("proveedorEntrada");
-
-    const [products, suppliers] = await Promise.all([
-      ProductController.getAll(),
-      SupplierController.getAll()
-    ]);
-
-    productSelect.innerHTML = '<option value="">Selecciona un producto</option>';
-    suppliers.forEach(s => {
-      const option = document.createElement("option");
-      option.value = s.id;
-      option.textContent = s.nombre;
-      supplierSelect.appendChild(option);
-    });
-
-    productSelect.innerHTML = '<option value="">Selecciona un producto</option>';
-    products.forEach(p => {
-      const option = document.createElement("option");
-      option.value = p.id;
-      option.textContent = `${p.nombre} (${p.categoria})`;
-      productSelect.appendChild(option);
-    });
-  }
-
   static async updateCategoryChart() {
     const products = await ProductController.getAll();
     const categoryMap = {};
@@ -104,20 +50,19 @@ class UIController {
       categoryMap[p.categoria] += p.stock;
     });
 
-    ChartController.updateCategoryChart(categoryMap);
+    ChartController.initCategoryChart(categoryMap);
   }
 
-  static async updateMovementsChart(periodDays = 30) {
+  static async updateMovementsChart(days = 30) {
     const today = new Date();
-    const limitDate = new Date();
-    limitDate.setDate(today.getDate() - periodDays);
+    const startDate = new Date(today.getTime() - days * 86400000); // días atrás
 
     const [entries, outputs] = await Promise.all([
-      MovementController.getEntriesByDate(limitDate.toISOString().split("T")[0], today.toISOString().split("T")[0]),
-      MovementController.getOutputsByDate(limitDate.toISOString().split("T")[0], today.toISOString().split("T")[0])
+      MovementController.getEntriesByDate(startDate.toISOString().split("T")[0], today.toISOString().split("T")[0]),
+      MovementController.getOutputsByDate(startDate.toISOString().split("T")[0], today.toISOString().split("T")[0])
     ]);
 
-    ChartController.updateMovementsChart(entries, outputs, periodDays);
+    ChartController.initMovementsChart(entries, outputs, days);
   }
 }
 
