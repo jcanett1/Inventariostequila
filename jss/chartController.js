@@ -1,40 +1,36 @@
-// chartController.js
+// js/chartController.js
 
-// chartController.js
+import Chart from 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js'; 
 
 class ChartController {
+  static categoryChart = null;
+  static movementsChart = null;
+
   static initCategoryChart(data) {
-    const ctx = document.getElementById('stockByCategory');
-    new Chart(ctx, {
+    const ctx = document.getElementById("stockByCategory");
+    this.categoryChart = new Chart(ctx, {
       type: 'pie',
       data: {
         labels: Object.keys(data),
         datasets: [{
           label: 'Stock por Categoría',
           data: Object.values(data),
-          backgroundColor: [
-            '#3f51b5', '#f50057', '#4caf50', '#ff9800', '#9c27b0'
-          ]
+          backgroundColor: ['#3f51b5', '#f50057', '#4caf50', '#ff9800', '#9c27b0']
         }]
       },
       options: {
-        responsive: true,
-        plugins: {
-          legend: { position: 'right' },
-          title: { display: true, text: 'Distribución por Categoría' }
-        }
+        responsive: true
       }
     });
   }
 
-  static updateMovementsChart(entries, outputs, days = 30) {
-    const ctx = document.getElementById('stockMovements');
-
-    const dates = [];
+  static initMovementsChart(entries, outputs, days = 30) {
+    const ctx = document.getElementById("stockMovements");
+    const labels = [];
     for (let i = 0; i < days; i++) {
       const d = new Date();
       d.setDate(d.getDate() - days + i + 1);
-      dates.push(`${d.getMonth()+1}/${d.getDate()}`);
+      labels.push(`${d.getMonth()+1}/${d.getDate()}`);
     }
 
     const entryData = Array(days).fill(0);
@@ -54,10 +50,10 @@ class ChartController {
       }
     });
 
-    new Chart(ctx, {
+    this.movementsChart = new Chart(ctx, {
       type: 'line',
       data: {
-        labels: dates,
+        labels: labels,
         datasets: [
           {
             label: 'Entradas',
@@ -80,4 +76,4 @@ class ChartController {
   }
 }
 
-window.ChartController = ChartController;
+export default ChartController;
