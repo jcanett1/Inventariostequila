@@ -1,7 +1,3 @@
-import UIController from './uiController.js';
-import Chart from 'chart.js/auto';
-const { supabase } = window.supabaseClient || {};
-
 // Configuración centralizada
 const CONFIG = {
   tables: {
@@ -23,7 +19,7 @@ const CONFIG = {
 class DataService {
   static async getCategories() {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await SupabaseService.supabase
         .from(CONFIG.tables.products)
         .select('category, stock')
         .order('stock', { ascending: false });
@@ -48,12 +44,12 @@ class DataService {
       const dateString = dateLimit.toISOString().split('T')[0];
 
       const [entries, outputs] = await Promise.all([
-        supabase
+        SupabaseService.supabase
           .from(CONFIG.tables.entries)
           .select('date, quantity')
           .gte('date', dateString)
           .order('date'),
-        supabase
+        SupabaseService.supabase
           .from(CONFIG.tables.outputs)
           .select('date, quantity')
           .gte('date', dateString)
@@ -140,11 +136,22 @@ class ChartService {
 class App {
   static async init() {
     try {
-      // 1. Inicializar UI
-      UIController.init();
-      
-      // 2. Verificar conexión y elementos
-      if (!(await this.checkPrerequisites())) return;
+      // 1. Verificar elementos del DOM
+      const elements = {
+        category: document.getElementById('stockByCategory'),
+        movement: document.getElementById('stockMovements')
+      };
+
+      if (!elements.category && !elements.movement) {
+        console.warn("No se encontraron elementos canvas");
+        return;
+      }
+
+      // 2. Verificar conexión con Supabase
+      if (!(await SupabaseService.testConnection())) {
+        console.warn("No se pudo conectar a Supabase. Usando datos de ejemplo.");
+        return this.showErrorState();
+      }
 
       // 3. Cargar datos
       const [categoriesData, movementsData] = await Promise.all([
@@ -159,25 +166,6 @@ class App {
       console.error("App initialization failed:", error);
       this.showErrorState();
     }
-  }
-
-  static async checkPrerequisites() {
-    const elements = {
-      category: document.getElementById('stockByCategory'),
-      movement: document.getElementById('stockMovements') // Nota: Verifica este ID (¿typo?)
-    };
-
-    if (!elements.category && !elements.movement) {
-      console.warn("No se encontraron elementos canvas");
-      return false;
-    }
-
-    if (!(await testConnection())) {
-      console.warn("No se pudo conectar a Supabase");
-      return false;
-    }
-
-    return true;
   }
 
   static renderCharts(categoriesData, movementsData) {
@@ -198,8 +186,6 @@ class App {
   }
 
   static showErrorState() {
-    // Implementar lógica para mostrar estado de error en la UI
-    console.log("Mostrando datos de ejemplo debido a error");
     const sampleData = DataService.getSampleData();
     this.renderCharts(
       { "Electrónica": 25, "Ropa": 18 },
