@@ -1,8 +1,6 @@
-// js/uiController.js
-
-import * as ProductController from './productController.js';
-import * as SupplierController from './supplierController.js';
-import * as MovementController from './movementController.js';
+import ProductController from './productController.js';
+import SupplierController from './supplierController.js';
+import MovementController from './movementController.js';
 import ChartController from './chartController.js';
 
 class UIController {
@@ -63,6 +61,18 @@ class UIController {
     ]);
 
     ChartController.initMovementsChart(entries, outputs, days);
+  }
+
+  static async loadSuppliersTable() {
+    // Implementa la carga de la tabla de proveedores si es necesario
+  }
+
+  static async loadMovementsTab() {
+    // Implementa la carga de la tabla de movimientos si es necesario
+  }
+
+  static async loadLowStockTable() {
+    // Implementa la carga de la tabla de productos con bajo stock si es necesario
   }
 }
 
