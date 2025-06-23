@@ -1,6 +1,6 @@
 import UIController from './uiController.js';
 import Chart from 'chart.js/auto';
-import { supabase, testConnection } from './supabaseClient.js';
+const { supabase } = window.supabaseClient || {};
 
 // Configuración centralizada
 const CONFIG = {
