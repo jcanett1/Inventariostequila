@@ -1,68 +1,129 @@
 import UIController from './uiController.js';
 import ChartController from './chartController.js';
-import supabase from './supabaseClient.js'; // Importa el cliente Supabase
+import supabase from './supabaseClient.js';
 
-// Función para cargar datos de categorías desde Supabase
+// Configuración de nombres de tablas (ajusta según tu BD)
+const TABLE_NAMES = {
+  products: 'productos',
+  entries: 'entradas',
+  outputs: 'salidas'
+};
+
+// Función mejorada para cargar datos de categorías
 async function fetchCategoriesData() {
-  const { data, error } = await supabase
-    .from('productos')
-    .select('category, cantidad') // Cambiado de 'categoria' a 'category'
-    .range(0, 9);
+  try {
+    const { data, error } = await supabase
+      .from(TABLE_NAMES.products)
+      .select('category, cantidad')
+      .order('category', { ascending: true });
 
-  if (error) {
-    console.error("Error Supabase:", {
+    if (error) throw error;
+
+    return data.reduce((acc, item) => {
+      const key = item.category || 'Sin categoría';
+      acc[key] = (acc[key] || 0) + (item.cantidad || 0);
+      return acc;
+    }, {});
+
+  } catch (error) {
+    console.error("Error cargando categorías:", {
       message: error.message,
-      code: error.code,
-      hint: error.hint // Esto te dará pistas específicas
+      details: error.details
     });
-    return { "Ejemplo": 10 }; // Datos de fallback
+    
+    // Datos de ejemplo para desarrollo
+    return {
+      "Electrónica": 15,
+      "Ropa": 8,
+      "Alimentos": 5
+    };
   }
-
-  return data?.reduce((acc, item) => {
-    acc[item.category] = (acc[item.category] || 0) + (item.cantidad || 0);
-    return acc;
-  }, {});
 }
-// Función para cargar movimientos desde Supabase
+
+// Función mejorada para cargar movimientos
 async function fetchMovementsData() {
-  const { data: entries, error: entriesError } = await supabase
-    .from('entradas') // Cambia por tu tabla de entradas
-    .select('date, quantity');
+  try {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-  const { data: outputs, error: outputsError } = await supabase
-    .from('salidas') // Cambia por tu tabla de salidas
-    .select('date, quantity');
+    const [{ data: entries }, { data: outputs }] = await Promise.all([
+      supabase
+        .from(TABLE_NAMES.entries)
+        .select('created_at, quantity')
+        .gte('created_at', thirtyDaysAgo.toISOString()),
+      supabase
+        .from(TABLE_NAMES.outputs)
+        .select('created_at, quantity')
+        .gte('created_at', thirtyDaysAgo.toISOString())
+    ]);
 
-  if (entriesError || outputsError) {
-    console.error("Error al cargar movimientos:", entriesError || outputsError);
-    return { entries: [], outputs: [] };
+    return {
+      entries: entries || [],
+      outputs: outputs || []
+    };
+
+  } catch (error) {
+    console.error("Error cargando movimientos:", error);
+    return {
+      entries: [
+        { created_at: new Date(), quantity: 5 },
+        { created_at: new Date(Date.now() - 86400000), quantity: 3 }
+      ],
+      outputs: [
+        { created_at: new Date(), quantity: 2 },
+        { created_at: new Date(Date.now() - 86400000), quantity: 1 }
+      ]
+    };
   }
-
-  return { entries, outputs };
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
-  console.log("DOM cargado. Inicializando...");
+// Función para inicializar gráficos de forma segura
+function initCharts(categoriesData, movementsData) {
+  const categoryCanvas = document.getElementById("stockByCategory");
+  const movementCanvas = document.getElementById("stockMovements");
 
-  // 1. Inicializar UI
-  UIController.init();
-
-  // 2. Cargar datos REALES desde Supabase
-  const categoriesData = await fetchCategoriesData();
-  const movementsData = await fetchMovementsData();
-
-  console.log("Datos cargados:", { categoriesData, movementsData });
-
-  // 3. Inicializar gráficos (solo si los canvas existen)
-  if (document.getElementById("stockByCategory")) {
-    ChartController.initCategoryChart(categoriesData);
-  } else {
-    console.warn("Canvas 'stockByCategory' no encontrado");
+  if (categoryCanvas) {
+    try {
+      ChartController.initCategoryChart(categoriesData);
+    } catch (chartError) {
+      console.error("Error inicializando gráfico de categorías:", chartError);
+    }
   }
 
-  if (document.getElementById("stockMovements")) {
-    ChartController.initMovementsChart(movementsData.entries, movementsData.outputs);
-  } else {
-    console.warn("Canvas 'stockMovements' no encontrado");
+  if (movementCanvas) {
+    try {
+      ChartController.initMovementsChart(
+        movementsData.entries,
+        movementsData.outputs
+      );
+    } catch (chartError) {
+      console.error("Error inicializando gráfico de movimientos:", chartError);
+    }
+  }
+}
+
+// Inicialización principal
+document.addEventListener('DOMContentLoaded', async () => {
+  console.log("Aplicación iniciando...");
+
+  try {
+    UIController.init();
+    
+    const [categoriesData, movementsData] = await Promise.all([
+      fetchCategoriesData(),
+      fetchMovementsData()
+    ]);
+
+    console.log("Datos cargados:", {
+      categories: Object.keys(categoriesData),
+      movements: movementsData
+    });
+
+    initCharts(categoriesData, movementsData);
+
+  } catch (mainError) {
+    console.error("Error en la inicialización:", mainError);
+    // Mostrar mensaje de error al usuario
+    UIController.showError("Ocurrió un error al cargar los datos");
   }
 });
