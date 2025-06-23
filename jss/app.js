@@ -89,26 +89,69 @@ function initCharts(categoriesData, movementsData) {
 
 // Inicialización principal
 document.addEventListener('DOMContentLoaded', async () => {
-  console.log("Aplicación iniciando...");
-
   try {
-    UIController.init();
-    
+    // Cargar datos
     const [categoriesData, movementsData] = await Promise.all([
       fetchCategoriesData(),
       fetchMovementsData()
     ]);
 
-    console.log("Datos cargados:", {
-      categories: Object.keys(categoriesData),
-      movements: movementsData
-    });
+    // Inicializar gráficos
+    if (document.getElementById("stockByCategory")) {
+      new Chart(
+        document.getElementById("stockByCategory"),
+        {
+          type: 'pie',
+          data: {
+            labels: Object.keys(categoriesData),
+            datasets: [{
+              data: Object.values(categoriesData),
+              backgroundColor: [
+                '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'
+              ]
+            }]
+          }
+        }
+      );
+    }
 
-    initCharts(categoriesData, movementsData);
+    if (document.getElementById("stockMovements")) {
+      // Procesar datos para gráfico de líneas
+      const processTimeData = (items) => {
+        // Agrupar por día
+        return items.reduce((acc, item) => {
+          const date = new Date(item.created_at).toLocaleDateString();
+          acc[date] = (acc[date] || 0) + item.quantity;
+          return acc;
+        }, {});
+      };
 
-  } catch (mainError) {
-    console.error("Error en la inicialización:", mainError);
-    // Mostrar mensaje de error al usuario
-    UIController.showError("Ocurrió un error al cargar los datos");
+      new Chart(
+        document.getElementById("stockMovements"),
+        {
+          type: 'line',
+          data: {
+            labels: Object.keys(processTimeData(movementsData.entries)),
+            datasets: [
+              {
+                label: 'Entradas',
+                data: Object.values(processTimeData(movementsData.entries)),
+                borderColor: '#4BC0C0',
+                tension: 0.1
+              },
+              {
+                label: 'Salidas',
+                data: Object.values(processTimeData(movementsData.outputs)),
+                borderColor: '#FF6384',
+                tension: 0.1
+              }
+            ]
+          }
+        }
+      );
+    }
+
+  } catch (error) {
+    console.error("Initialization error:", error);
   }
 });
