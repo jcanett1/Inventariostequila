@@ -1,3 +1,4 @@
+import UIController from './uiController.js';
 import ChartController from './chartController.js';
 
 // Ejemplo de datos para el gráfico de categorías
@@ -23,6 +24,7 @@ const outputs = [
 ];
 
 document.addEventListener('DOMContentLoaded', () => {
+  UIController.init(); // Inicializa toda la interfaz
   ChartController.initCategoryChart(categoryData);
   ChartController.initMovementsChart(entries, outputs);
 });
