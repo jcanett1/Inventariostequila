@@ -1,87 +1,96 @@
-import { Chart } from 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/+esm';
+import { Chart } from 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js'
 
 class ChartController {
-  static categoryChart = null;
-  static movementsChart = null;
+  static categoryChart = null
+  static movementsChart = null
 
   static initCategoryChart(data) {
-    const ctx = document.getElementById("stockByCategory");
-    if (!ctx) {
-      console.error("Elemento con ID stockByCategory no encontrado.");
-      return;
+    const ctx = document.getElementById('stockByCategory')
+    if (!ctx) return
+
+    // Destruir gráfico anterior si existe
+    if (this.categoryChart) {
+      this.categoryChart.destroy()
     }
-    console.log("Elemento stockByCategory encontrado:", ctx);
+
     this.categoryChart = new Chart(ctx, {
-      type: 'pie',
+      type: 'doughnut',
       data: {
         labels: Object.keys(data),
         datasets: [{
-          label: 'Stock por Categoría',
           data: Object.values(data),
-          backgroundColor: ['#3f51b5', '#f50057', '#4caf50', '#ff9800', '#9c27b0']
+          backgroundColor: [
+            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'
+          ],
+          borderWidth: 1
         }]
       },
       options: {
-        responsive: true
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'right'
+          }
+        }
       }
-    });
+    })
   }
 
-  static initMovementsChart(entries, outputs, days = 30) {
-    const ctx = document.getElementById("stockMovements");
-    if (!ctx) {
-      console.error("Elemento con ID stockMovements no encontrado.");
-      return;
+  static initMovementsChart(entries, outputs) {
+    const ctx = document.getElementById('stockMovements')
+    if (!ctx) return
+
+    // Procesar datos
+    const dates = [...new Set([
+      ...entries.map(e => e.date),
+      ...outputs.map(o => o.date)
+    ])].sort()
+
+    const entriesData = dates.map(date => 
+      entries.find(e => e.date === date)?.quantity || 0
+    )
+    const outputsData = dates.map(date => 
+      outputs.find(o => o.date === date)?.quantity || 0
+    )
+
+    // Destruir gráfico anterior si existe
+    if (this.movementsChart) {
+      this.movementsChart.destroy()
     }
-    console.log("Elemento stockMovements encontrado:", ctx);
-    const labels = [];
-    for (let i = 0; i < days; i++) {
-      const d = new Date();
-      d.setDate(d.getDate() - days + i + 1);
-      labels.push(`${d.getMonth() + 1}/${d.getDate()}`);
-    }
-
-    const entryData = Array(days).fill(0);
-    const outputData = Array(days).fill(0);
-
-    entries.forEach(e => {
-      const diff = Math.floor((new Date() - new Date(e.date)) / (1000 * 60 * 60 * 24));
-      if (diff < days && diff >= 0) {
-        entryData[days - 1 - diff] += e.quantity;
-      }
-    });
-
-    outputs.forEach(o => {
-      const diff = Math.floor((new Date() - new Date(o.date)) / (1000 * 60 * 60 * 24));
-      if (diff < days && diff >= 0) {
-        outputData[days - 1 - diff] += o.quantity;
-      }
-    });
 
     this.movementsChart = new Chart(ctx, {
       type: 'line',
       data: {
-        labels: labels,
+        labels: dates,
         datasets: [
           {
             label: 'Entradas',
-            data: entryData,
-            borderColor: '#4caf50',
-            backgroundColor: 'rgba(76, 175, 80, 0.2)'
+            data: entriesData,
+            borderColor: '#4BC0C0',
+            backgroundColor: 'rgba(75, 192, 192, 0.1)',
+            tension: 0.1,
+            fill: true
           },
           {
             label: 'Salidas',
-            data: outputData,
-            borderColor: '#f44336',
-            backgroundColor: 'rgba(244, 67, 54, 0.2)'
+            data: outputsData,
+            borderColor: '#FF6384',
+            backgroundColor: 'rgba(255, 99, 132, 0.1)',
+            tension: 0.1,
+            fill: true
           }
         ]
       },
       options: {
-        responsive: true
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        }
       }
-    });
+    })
   }
 }
 
-export default ChartController;
+export default ChartController
