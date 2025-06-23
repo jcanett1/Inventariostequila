@@ -50,15 +50,28 @@
   </div>
 
   <!-- Agrega canvases para los gráficos -->
-  <div class="container">
-    <h2>Stock por Categoría</h2>
-    <canvas id="stockByCategory" width="400" height="200"></canvas>
+  <div class="row mt-4">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">
+        <h5>Stock por Categoría</h5>
+      </div>
+      <div class="card-body">
+        <canvas id="stockByCategory" height="300"></canvas>
+      </div>
+    </div>
   </div>
-
-  <div class="container mt-5">
-    <h2>Movimientos de Stock</h2>
-    <canvas id="stockMovements" width="400" height="200"></canvas>
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">
+        <h5>Movimientos Recientes</h5>
+      </div>
+      <div class="card-body">
+        <canvas id="stockMovements" height="300"></canvas>
+      </div>
+    </div>
   </div>
+</div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>    
   <script type="module" src="jss/supabaseClient.js"></script>
