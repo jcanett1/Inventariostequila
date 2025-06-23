@@ -34,19 +34,19 @@ async function fetchCategoriesData() {
 // Función mejorada para cargar movimientos
 async function fetchMovementsData() {
   try {
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    // Últimos 30 días
+    const date = new Date();
+    date.setDate(date.getDate() - 30);
+    
+    const { data: entries } = await supabase
+      .from('entradas')
+      .select('created_at, quantity, product_id')
+      .gte('created_at', date.toISOString());
 
-    const [{ data: entries }, { data: outputs }] = await Promise.all([
-      supabase
-        .from(TABLE_NAMES.entries)
-        .select('created_at, quantity')
-        .gte('created_at', thirtyDaysAgo.toISOString()),
-      supabase
-        .from(TABLE_NAMES.outputs)
-        .select('created_at, quantity')
-        .gte('created_at', thirtyDaysAgo.toISOString())
-    ]);
+    const { data: outputs } = await supabase
+      .from('salidas')
+      .select('created_at, quantity, product_id')
+      .gte('created_at', date.toISOString());
 
     return {
       entries: entries || [],
@@ -54,16 +54,10 @@ async function fetchMovementsData() {
     };
 
   } catch (error) {
-    console.error("Error cargando movimientos:", error);
+    console.error("Error loading movements:", error);
     return {
-      entries: [
-        { created_at: new Date(), quantity: 5 },
-        { created_at: new Date(Date.now() - 86400000), quantity: 3 }
-      ],
-      outputs: [
-        { created_at: new Date(), quantity: 2 },
-        { created_at: new Date(Date.now() - 86400000), quantity: 1 }
-      ]
+      entries: [{ created_at: new Date(), quantity: 5 }],
+      outputs: [{ created_at: new Date(), quantity: 2 }]
     };
   }
 }
