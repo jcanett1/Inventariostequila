@@ -12,34 +12,34 @@ const TABLE_NAMES = {
 // Función mejorada para cargar datos de categorías
 async function fetchCategoriesData() {
   try {
+    // Primero verifiquemos la estructura de la tabla
+    const { data: sampleData } = await supabase
+      .from('productos')
+      .select('*')
+      .limit(1)
+      .single();
+
+    console.log("Estructura de productos:", sampleData);
+
+    // Luego ajusta los nombres de las columnas según lo que muestre el console.log
     const { data, error } = await supabase
-      .from(TABLE_NAMES.products)
-      .select('category, cantidad')
+      .from('productos')
+      .select('category, stock') // Cambiado a los nombres correctos
       .order('category', { ascending: true });
 
     if (error) throw error;
 
     return data.reduce((acc, item) => {
       const key = item.category || 'Sin categoría';
-      acc[key] = (acc[key] || 0) + (item.cantidad || 0);
+      acc[key] = (acc[key] || 0) + (item.stock || 0); // Cambiado a item.stock
       return acc;
     }, {});
 
   } catch (error) {
-    console.error("Error cargando categorías:", {
-      message: error.message,
-      details: error.details
-    });
-    
-    // Datos de ejemplo para desarrollo
-    return {
-      "Electrónica": 15,
-      "Ropa": 8,
-      "Alimentos": 5
-    };
+    console.error("Error cargando categorías:", error);
+    return {"Electrónica": 15, "Ropa": 8}; // Datos de ejemplo
   }
 }
-
 // Función mejorada para cargar movimientos
 async function fetchMovementsData() {
   try {
