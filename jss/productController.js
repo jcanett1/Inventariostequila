@@ -1,5 +1,3 @@
-// js/productController.js
-
 import supabase from './supabaseClient.js';
 
 class ProductController {
@@ -26,9 +24,9 @@ class ProductController {
       .from('productos')
       .update({
         nombre: updatedProduct.name,
-        descripcion: updatedProduct.description,
-        categoria: updatedProduct.category,
-        precio: updatedProduct.price,
+        descripcion: updatedProduct.descripcion,
+        categoria: updatedProduct.categoria,
+        precio: updatedProduct.precio,
         stock: updatedProduct.stock
       })
       .eq('id', id)
