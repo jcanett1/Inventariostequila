@@ -1,6 +1,6 @@
 import UIController from './uiController.js';
 import ChartController from './chartController.js';
-import { supabase } from './supabaseClient.js'; // Importa el cliente Supabase
+import supabase from './supabaseClient.js'; // Importa el cliente Supabase
 
 // Función para cargar datos de categorías desde Supabase
 async function fetchCategoriesData() {
