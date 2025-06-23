@@ -1,216 +1,212 @@
 import UIController from './uiController.js';
-import ChartController from './chartController.js';
-import { supabase } from './supabaseClient.js'
+import Chart from 'chart.js/auto';
+import { supabase, testConnection } from './supabaseClient.js';
 
-// Configuración de tablas (ajustado a tu estructura exacta)
-const TABLE_NAMES = {
-  products: 'productos',
-  entries: 'entradas',
-  outputs: 'salidas'
+// Configuración centralizada
+const CONFIG = {
+  tables: {
+    products: 'productos',
+    entries: 'entradas',
+    outputs: 'salidas'
+  },
+  charts: {
+    colors: {
+      category: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'],
+      entries: '#4BC0C0',
+      outputs: '#FF6384'
+    },
+    daysToShow: 30
+  }
 };
 
-// Función para cargar datos de categorías
-async function fetchCategoriesData() {
-  try {
-    const { data, error } = await supabase
-      .from(TABLE_NAMES.products)
-      .select('category, stock')
-      .order('stock', { ascending: false });
-
-    if (error) throw error;
-
-    return data.reduce((acc, product) => {
-      const category = product.category || 'Sin categoría';
-      acc[category] = (acc[category] || 0) + (product.stock || 0);
-      return acc;
-    }, {});
-
-  } catch (error) {
-    console.error("Error loading categories:", {
-      message: error.message,
-      details: error.details,
-      hint: error.hint
-    });
-    return { "Electrónica": 25, "Ropa": 18 }; // Datos de ejemplo
-  }
-}
-
-// Función para cargar movimientos (ajustada a tus columnas 'date')
-async function fetchMovementsData() {
-  try {
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const dateString = thirtyDaysAgo.toISOString().split('T')[0];
-
-    const [{ data: entries }, { data: outputs }] = await Promise.all([
-      supabase
-        .from(TABLE_NAMES.entries)
-        .select('date, quantity')
-        .gte('date', dateString)
-        .order('date', { ascending: true }),
-      supabase
-        .from(TABLE_NAMES.outputs)
-        .select('date, quantity')
-        .gte('date', dateString)
-        .order('date', { ascending: true })
-    ]);
-
-    return {
-      entries: entries || [],
-      outputs: outputs || []
-    };
-
-  } catch (error) {
-    console.error("Error loading movements:", {
-      message: error.message,
-      code: error.code
-    });
-    return {
-      entries: [{ date: new Date().toISOString().split('T')[0], quantity: 5 }],
-      outputs: [{ date: new Date().toISOString().split('T')[0], quantity: 2 }]
-    };
-  }
-}
-
-// Procesar datos de movimientos para el gráfico
-function processMovementData(entries, outputs) {
-  const allDates = [
-    ...new Set([
-      ...entries.map(e => e.date),
-      ...outputs.map(o => o.date)
-    ])
-  ].sort();
-
-  return {
-    labels: allDates,
-    entriesData: allDates.map(date => 
-      entries.find(e => e.date === date)?.quantity || 0
-    ),
-    outputsData: allDates.map(date => 
-      outputs.find(o => o.date === date)?.quantity || 0
-    )
-  };
-}
-
-// Inicialización segura de gráficos
-function initCharts(categoriesData, movementsData) {
-  const categoryCtx = document.getElementById('stockByCategory');
-  const movementCtx = document.getElementById('stockMovements');
-
-  // Gráfico de categorías (solo si existe el canvas)
-  if (categoryCtx) {
+// Controlador de Datos
+class DataService {
+  static async getCategories() {
     try {
-      new Chart(categoryCtx, {
-        type: 'doughnut',
-        data: {
-          labels: Object.keys(categoriesData),
-          datasets: [{
-            data: Object.values(categoriesData),
-            backgroundColor: [
-              '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'
-            ],
-            borderWidth: 1
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: {
-              position: 'right'
-            }
-          }
-        }
-      });
+      const { data, error } = await supabase
+        .from(CONFIG.tables.products)
+        .select('category, stock')
+        .order('stock', { ascending: false });
+
+      if (error) throw error;
+
+      return data.reduce((acc, { category = 'Sin categoría', stock = 0 }) => {
+        acc[category] = (acc[category] || 0) + stock;
+        return acc;
+      }, {});
+
     } catch (error) {
-      console.error("Error inicializando gráfico de categorías:", error);
+      console.error("Error loading categories:", error);
+      return { "Electrónica": 25, "Ropa": 18 };
     }
   }
 
-  // Gráfico de movimientos (solo si existe el canvas)
-  if (movementCtx) {
+  static async getMovements() {
     try {
-      const { labels, entriesData, outputsData } = processMovementData(
+      const dateLimit = new Date();
+      dateLimit.setDate(dateLimit.getDate() - CONFIG.charts.daysToShow);
+      const dateString = dateLimit.toISOString().split('T')[0];
+
+      const [entries, outputs] = await Promise.all([
+        supabase
+          .from(CONFIG.tables.entries)
+          .select('date, quantity')
+          .gte('date', dateString)
+          .order('date'),
+        supabase
+          .from(CONFIG.tables.outputs)
+          .select('date, quantity')
+          .gte('date', dateString)
+          .order('date')
+      ]);
+
+      return {
+        entries: entries.data || [],
+        outputs: outputs.data || []
+      };
+
+    } catch (error) {
+      console.error("Error loading movements:", error);
+      return this.getSampleData();
+    }
+  }
+
+  static getSampleData() {
+    const today = new Date().toISOString().split('T')[0];
+    return {
+      entries: [{ date: today, quantity: 5 }],
+      outputs: [{ date: today, quantity: 2 }]
+    };
+  }
+}
+
+// Controlador de Gráficos
+class ChartService {
+  static initCategoryChart(ctx, data) {
+    return new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: Object.keys(data),
+        datasets: [{
+          data: Object.values(data),
+          backgroundColor: CONFIG.charts.colors.category,
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'right' }
+        }
+      }
+    });
+  }
+
+  static initMovementChart(ctx, entries, outputs) {
+    const dates = [...new Set([...entries.map(e => e.date), ...outputs.map(o => o.date)])].sort();
+    
+    return new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: dates,
+        datasets: [
+          {
+            label: 'Entradas',
+            data: dates.map(date => entries.find(e => e.date === date)?.quantity || 0),
+            borderColor: CONFIG.charts.colors.entries,
+            backgroundColor: `${CONFIG.charts.colors.entries}20`,
+            tension: 0.1,
+            fill: true
+          },
+          {
+            label: 'Salidas',
+            data: dates.map(date => outputs.find(o => o.date === date)?.quantity || 0),
+            borderColor: CONFIG.charts.colors.outputs,
+            backgroundColor: `${CONFIG.charts.colors.outputs}20`,
+            tension: 0.1,
+            fill: true
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        scales: { y: { beginAtZero: true } }
+      }
+    });
+  }
+}
+
+// Inicialización de la Aplicación
+class App {
+  static async init() {
+    try {
+      // 1. Inicializar UI
+      UIController.init();
+      
+      // 2. Verificar conexión y elementos
+      if (!(await this.checkPrerequisites())) return;
+
+      // 3. Cargar datos
+      const [categoriesData, movementsData] = await Promise.all([
+        DataService.getCategories(),
+        DataService.getMovements()
+      ]);
+
+      // 4. Renderizar gráficos
+      this.renderCharts(categoriesData, movementsData);
+
+    } catch (error) {
+      console.error("App initialization failed:", error);
+      this.showErrorState();
+    }
+  }
+
+  static async checkPrerequisites() {
+    const elements = {
+      category: document.getElementById('stockByCategory'),
+      movement: document.getElementById('stockMovements') // Nota: Verifica este ID (¿typo?)
+    };
+
+    if (!elements.category && !elements.movement) {
+      console.warn("No se encontraron elementos canvas");
+      return false;
+    }
+
+    if (!(await testConnection())) {
+      console.warn("No se pudo conectar a Supabase");
+      return false;
+    }
+
+    return true;
+  }
+
+  static renderCharts(categoriesData, movementsData) {
+    const categoryCtx = document.getElementById('stockByCategory');
+    const movementCtx = document.getElementById('stockMovements');
+
+    if (categoryCtx) {
+      ChartService.initCategoryChart(categoryCtx, categoriesData);
+    }
+
+    if (movementCtx) {
+      ChartService.initMovementChart(
+        movementCtx,
         movementsData.entries,
         movementsData.outputs
       );
-
-      new Chart(movementCtx, {
-        type: 'line',
-        data: {
-          labels: labels,
-          datasets: [
-            {
-              label: 'Entradas',
-              data: entriesData,
-              borderColor: '#4BC0C0',
-              backgroundColor: 'rgba(75, 192, 192, 0.1)',
-              tension: 0.1,
-              fill: true
-            },
-            {
-              label: 'Salidas',
-              data: outputsData,
-              borderColor: '#FF6384',
-              backgroundColor: 'rgba(255, 99, 132, 0.1)',
-              tension: 0.1,
-              fill: true
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          scales: {
-            y: {
-              beginAtZero: true
-            }
-          }
-        }
-      });
-    } catch (error) {
-      console.error("Error inicializando gráfico de movimientos:", error);
     }
+  }
+
+  static showErrorState() {
+    // Implementar lógica para mostrar estado de error en la UI
+    console.log("Mostrando datos de ejemplo debido a error");
+    const sampleData = DataService.getSampleData();
+    this.renderCharts(
+      { "Electrónica": 25, "Ropa": 18 },
+      sampleData
+    );
   }
 }
 
-// Inicialización principal
-document.addEventListener('DOMContentLoaded', async () => {
-  console.log("DOM cargado. Inicializando aplicación...");
-
-  try {
-    // 1. Inicializar UI
-    UIController.init();
-
-    // 2. Verificar elementos del DOM
-    const chartElements = {
-      category: document.getElementById('stockByCategory'),
-      movement: document.getElementById('stockMovements')
-    };
-
-    if (!chartElements.category && !chartElements.movement) {
-      console.warn("No se encontraron elementos canvas. Verifica:");
-      console.warn("1. Que estás en index.html");
-      console.warn("2. Que los IDs coinciden exactamente");
-      return;
-    }
-
-    // 3. Cargar datos
-    const [categoriesData, movementsData] = await Promise.all([
-      chartElements.category ? fetchCategoriesData() : Promise.resolve(null),
-      chartElements.movement ? fetchMovementsData() : Promise.resolve(null)
-    ]);
-
-    // 4. Inicializar gráficos
-    initCharts(categoriesData, movementsData);
-
-  } catch (error) {
-    console.error("Error en la inicialización:", error);
-    // Mostrar datos de ejemplo en caso de error
-    initCharts(
-      { "Electrónica": 25, "Ropa": 18 },
-      {
-        entries: [{ date: new Date().toISOString().split('T')[0], quantity: 5 }],
-        outputs: [{ date: new Date().toISOString().split('T')[0], quantity: 2 }]
-      }
-    );
-  }
-});
+// Iniciar la aplicación cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', App.init);
