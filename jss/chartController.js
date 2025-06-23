@@ -1,4 +1,4 @@
-import Chart from 'https://cdn.jsdelivr.net/npm/chart.js/auto'; 
+import { Chart } from 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/+esm';
 
 class ChartController {
   static categoryChart = null;
