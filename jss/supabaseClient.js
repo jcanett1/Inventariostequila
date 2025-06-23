@@ -1,4 +1,3 @@
-// Importar createClient desde CDN
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
 
 // Configuración
@@ -8,18 +7,5 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 // Crear y exportar el cliente Supabase
 const supabase = createClient(supabaseUrl, supabaseKey)
 
-// Función para probar conexión
-export async function testConnection() {
-  try {
-    const { error } = await supabase
-      .from('productos')
-      .select('*')
-      .limit(1)
-    return !error
-  } catch (error) {
-    console.error("Error probando conexión:", error)
-    return false
-  }
-}
 
 export default supabase
