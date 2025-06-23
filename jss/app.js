@@ -1,9 +1,8 @@
-// Importaciones
 import supabase from './supabaseClient.js'
 import UIController from './uiController.js'
 import ChartController from './chartController.js'
 
-// Configuración
+// Configuración centralizada
 const CONFIG = {
   tables: {
     products: 'productos',
@@ -20,7 +19,7 @@ const CONFIG = {
   }
 }
 
-// Controlador de Datos
+// Servicio de Datos
 class DataService {
   static async getCategories() {
     try {
@@ -37,7 +36,7 @@ class DataService {
       }, {})
 
     } catch (error) {
-      console.error("Error cargando categorías:", error)
+      console.error("Error loading categories:", error)
       return { "Electrónica": 25, "Ropa": 18 }
     }
   }
@@ -49,13 +48,11 @@ class DataService {
       const dateString = dateLimit.toISOString().split('T')[0]
 
       const [entries, outputs] = await Promise.all([
-        supabase
-          .from(CONFIG.tables.entries)
+        supabase.from(CONFIG.tables.entries)
           .select('date, quantity')
           .gte('date', dateString)
           .order('date'),
-        supabase
-          .from(CONFIG.tables.outputs)
+        supabase.from(CONFIG.tables.outputs)
           .select('date, quantity')
           .gte('date', dateString)
           .order('date')
@@ -67,7 +64,7 @@ class DataService {
       }
 
     } catch (error) {
-      console.error("Error cargando movimientos:", error)
+      console.error("Error loading movements:", error)
       return this.getSampleData()
     }
   }
@@ -81,44 +78,47 @@ class DataService {
   }
 }
 
-// Inicialización de la aplicación
+// Clase principal de la aplicación
 class App {
   static async init() {
     try {
-      // 1. Verificar conexión
-      if (!(await testConnection())) {
-        console.error("No se pudo conectar a Supabase")
-        return this.showErrorState()
-      }
-
-      // 2. Inicializar UI
+      // 1. Inicializar UI
       await UIController.init()
 
-      // 3. Cargar datos
+      // 2. Cargar datos
       const [categoriesData, movementsData] = await Promise.all([
         DataService.getCategories(),
         DataService.getMovements()
       ])
 
-      // 4. Inicializar gráficos
-      ChartController.initCategoryChart(categoriesData)
-      ChartController.initMovementsChart(movementsData.entries, movementsData.outputs)
+      // 3. Inicializar gráficos
+      this.initCharts(categoriesData, movementsData)
 
     } catch (error) {
-      console.error("Error inicializando aplicación:", error)
+      console.error("App initialization failed:", error)
       this.showErrorState()
     }
   }
 
+  static initCharts(categoriesData, movementsData) {
+    const categoryCtx = document.getElementById('stockByCategory')
+    const movementCtx = document.getElementById('stockMovements')
+
+    if (categoryCtx) {
+      ChartController.initCategoryChart(categoriesData)
+    }
+
+    if (movementCtx) {
+      ChartController.initMovementsChart(movementsData.entries, movementsData.outputs)
+    }
+  }
+
   static showErrorState() {
-    // Mostrar datos de ejemplo
+    const sampleData = DataService.getSampleData()
     ChartController.initCategoryChart({ "Electrónica": 25, "Ropa": 18 })
-    ChartController.initMovementsChart(
-      [{ date: new Date().toISOString().split('T')[0], quantity: 5 }],
-      [{ date: new Date().toISOString().split('T')[0], quantity: 2 }]
-    )
+    ChartController.initMovementsChart(sampleData.entries, sampleData.outputs)
   }
 }
 
-// Iniciar la aplicación
+// Iniciar aplicación cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', App.init)
