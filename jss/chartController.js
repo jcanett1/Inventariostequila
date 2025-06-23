@@ -1,6 +1,4 @@
-// js/chartController.js
-
-import Chart from 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js'; 
+import Chart from 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.esm.min.js'; 
 
 class ChartController {
   static categoryChart = null;
@@ -8,6 +6,10 @@ class ChartController {
 
   static initCategoryChart(data) {
     const ctx = document.getElementById("stockByCategory");
+    if (!ctx) {
+      console.error("Elemento con ID stockByCategory no encontrado.");
+      return;
+    }
     this.categoryChart = new Chart(ctx, {
       type: 'pie',
       data: {
@@ -26,11 +28,15 @@ class ChartController {
 
   static initMovementsChart(entries, outputs, days = 30) {
     const ctx = document.getElementById("stockMovements");
+    if (!ctx) {
+      console.error("Elemento con ID stockMovements no encontrado.");
+      return;
+    }
     const labels = [];
     for (let i = 0; i < days; i++) {
       const d = new Date();
       d.setDate(d.getDate() - days + i + 1);
-      labels.push(`${d.getMonth()+1}/${d.getDate()}`);
+      labels.push(`${d.getMonth() + 1}/${d.getDate()}`);
     }
 
     const entryData = Array(days).fill(0);
