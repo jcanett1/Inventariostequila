@@ -116,4 +116,10 @@ class App {
     ChartController.initCategoryChart({ "Electrónica": 25, "Ropa": 18 })
     ChartController.initMovementsChart(
       [{ date: new Date().toISOString().split('T')[0], quantity: 5 }],
-      [{ date: new Date().toISOString().split('T')[0
+      [{ date: new Date().toISOString().split('T')[0], quantity: 2 }]
+    )
+  }
+}
+
+// Iniciar la aplicación
+document.addEventListener('DOMContentLoaded', App.init)
