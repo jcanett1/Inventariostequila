@@ -10,6 +10,7 @@ class ChartController {
       console.error("Elemento con ID stockByCategory no encontrado.");
       return;
     }
+    console.log("Elemento stockByCategory encontrado:", ctx);
     this.categoryChart = new Chart(ctx, {
       type: 'pie',
       data: {
@@ -32,6 +33,7 @@ class ChartController {
       console.error("Elemento con ID stockMovements no encontrado.");
       return;
     }
+    console.log("Elemento stockMovements encontrado:", ctx);
     const labels = [];
     for (let i = 0; i < days; i++) {
       const d = new Date();
