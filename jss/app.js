@@ -1,6 +1,6 @@
 import UIController from './uiController.js';
 import ChartController from './chartController.js';
-import supabase from './supabaseClient.js';
+import { supabase } from './supabaseClient.js'
 
 // Configuración de tablas (ajustado a tu estructura exacta)
 const TABLE_NAMES = {
