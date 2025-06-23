@@ -4,28 +4,25 @@ import supabase from './supabaseClient.js'; // Importa el cliente Supabase
 
 // Función para cargar datos de categorías desde Supabase
 async function fetchCategoriesData() {
-  // Agrega .range() para limitar resultados en modo prueba
   const { data, error } = await supabase
     .from('productos')
-    .select('categoria, cantidad')
-    .range(0, 9); // Limita a 10 registros inicialmente
+    .select('category, cantidad') // Cambiado de 'categoria' a 'category'
+    .range(0, 9);
 
   if (error) {
-    console.error("Error detallado:", {
+    console.error("Error Supabase:", {
       message: error.message,
-      details: error.details,
-      hint: error.hint,
-      code: error.code
+      code: error.code,
+      hint: error.hint // Esto te dará pistas específicas
     });
-    return { "Ejemplo": 10 }; // Datos de prueba para continuar
+    return { "Ejemplo": 10 }; // Datos de fallback
   }
 
   return data?.reduce((acc, item) => {
-    acc[item.categoria] = (acc[item.categoria] || 0) + (item.cantidad || 0);
+    acc[item.category] = (acc[item.category] || 0) + (item.cantidad || 0);
     return acc;
-  }, {}) || { "Ejemplo": 10 }; // Fallback seguro
+  }, {});
 }
-
 // Función para cargar movimientos desde Supabase
 async function fetchMovementsData() {
   const { data: entries, error: entriesError } = await supabase
