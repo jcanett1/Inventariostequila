@@ -92,11 +92,11 @@ class App {
       ])
 
       // 3. Inicializar gráficos
-      this.initCharts(categoriesData, movementsData)
+      App.initCharts(categoriesData, movementsData)
 
     } catch (error) {
       console.error("App initialization failed:", error)
-      this.showErrorState()
+      App.showErrorState()
     }
   }
 
