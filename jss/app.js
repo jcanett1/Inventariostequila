@@ -121,4 +121,4 @@ class App {
 }
 
 // Iniciar aplicación cuando el DOM esté listo
-document.addEventListener('DOMContentLoaded', App.init)
+document.addEventListener('DOMContentLoaded', App.init.bind(App))
