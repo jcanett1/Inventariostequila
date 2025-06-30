@@ -2,28 +2,28 @@ import supabase from './supabaseClient.js';
 
 class ProductController {
   static async getAll() {
-    try {
-      const { data, error } = await supabase
-        .from('productos')
-        .select('*')
-        .order('created_at', { ascending: false });
+  try {
+    const { data, error } = await supabase
+      .from('productos')
+      .select('*')
+      .order('name', { ascending: true }); // Ordenar por name en lugar de created_at
 
-      if (error) throw error;
+    if (error) throw error;
 
-      return data.map(item => ({
-        id: item.id,
-        name: item.name || 'Sin nombre',
-        description: item.description || '',
-        category: item.category || 'general',
-        price: item.price ? parseFloat(item.price) : 0,
-        stock: item.stock ? parseInt(item.stock) : 0
-      }));
-      
-    } catch (error) {
-      console.error("Error al obtener productos:", error.message);
-      return [];
-    }
+    return data.map(item => ({
+      id: item.id,
+      name: item.name || 'Sin nombre',
+      description: item.description || '',
+      category: item.category || 'general',
+      price: item.price ? parseFloat(item.price) : 0,
+      stock: item.stock ? parseInt(item.stock) : 0
+    }));
+    
+  } catch (error) {
+    console.error("Error al obtener productos:", error.message);
+    return [];
   }
+}
 
   static async add(product) {
     try {
