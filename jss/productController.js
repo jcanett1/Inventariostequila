@@ -8,16 +8,39 @@ class ProductController {
   }
 
   static async add(product) {
-    const { data, error } = await supabase.from('productos').insert([{
-      nombre: product.name,
-      descripcion: product.description,
-      categoria: product.category,
-      precio: product.price,
-      stock: product.stock || 0
-    }]).select();
-    if (error) console.error("Error al guardar producto:", error.message);
+  try {
+    // Validación básica de los datos del producto
+    if (!product.name || !product.price) {
+      throw new Error('Nombre y precio son campos requeridos');
+    }
+
+    const { data, error } = await supabase
+      .from('productos')
+      .insert([{
+        nombre: product.name,
+        descripcion: product.description || '',
+        categoria: product.category || 'sin-categoria',
+        precio: Number(product.price),
+        stock: Number(product.stock) || 0
+      }])
+      .select();
+
+    if (error) {
+      console.error("Error al guardar producto:", error.message);
+      throw error;
+    }
+
+    // Actualiza la UI después de agregar
+    await UIController.updateProductList();
+    await UIController.updateCategoryChart();
+
     return data?.[0] || null;
+  } catch (error) {
+    console.error('Error en Product.add:', error);
+    App.showErrorState('Error al agregar producto');
+    return null;
   }
+}
 
   static async update(id, updatedProduct) {
     const { data, error } = await supabase
