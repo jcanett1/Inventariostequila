@@ -10,13 +10,12 @@ class ProductController {
 
       if (error) throw error;
 
-      // Mapeo correcto de propiedades
       return data.map(item => ({
         id: item.id,
-        name: item.nombre || 'Sin nombre',
-        description: item.descripcion || '',
-        category: item.categoria || 'general',
-        price: item.precio ? parseFloat(item.precio) : 0,
+        name: item.name || 'Sin nombre',
+        description: item.description || '',
+        category: item.category || 'general',
+        price: item.price ? parseFloat(item.price) : 0,
         stock: item.stock ? parseInt(item.stock) : 0
       }));
       
@@ -28,12 +27,11 @@ class ProductController {
 
   static async add(product) {
     try {
-      // Validación exhaustiva
+      // Validación
       if (!product.name || typeof product.name !== 'string') {
         throw new Error('Nombre del producto inválido');
       }
 
-      // Corrección del error de sintaxis (paréntesis faltante)
       const price = parseFloat(product.price);
       if (isNaN(price)) {
         throw new Error('Precio debe ser un número válido');
@@ -44,10 +42,10 @@ class ProductController {
       const { data, error } = await supabase
         .from('productos')
         .insert([{
-          nombre: product.name.trim(),
-          descripcion: product.description?.trim() || '',
-          categoria: product.category?.trim() || 'general',
-          precio: price,
+          name: product.name.trim(),
+          description: product.description?.trim() || '',
+          category: product.category?.trim() || 'general',
+          price: price,
           stock: stock
         }])
         .select('*');
@@ -55,19 +53,18 @@ class ProductController {
       if (error) throw error;
       if (!data || data.length === 0) throw new Error('No se creó el producto');
 
-      console.log('Producto agregado:', data[0]);
       return {
         id: data[0].id,
-        name: data[0].nombre,
-        description: data[0].descripcion,
-        category: data[0].categoria,
-        price: parseFloat(data[0].precio),
+        name: data[0].name,
+        description: data[0].description,
+        category: data[0].category,
+        price: parseFloat(data[0].price),
         stock: parseInt(data[0].stock)
       };
       
     } catch (error) {
-      console.error('Error en ProductController.add:', error.message);
-      throw error; // Propaga el error para manejarlo en el UI
+      console.error('Error al agregar producto:', error.message);
+      throw error;
     }
   }
 
@@ -76,10 +73,10 @@ class ProductController {
       const { data, error } = await supabase
         .from('productos')
         .update({
-          nombre: updatedProduct.name,
-          descripcion: updatedProduct.description,
-          categoria: updatedProduct.category,
-          precio: parseFloat(updatedProduct.price),
+          name: updatedProduct.name,
+          description: updatedProduct.description,
+          category: updatedProduct.category,
+          price: parseFloat(updatedProduct.price),
           stock: parseInt(updatedProduct.stock) || 0
         })
         .eq('id', id)
@@ -90,10 +87,10 @@ class ProductController {
 
       return {
         id: data[0].id,
-        name: data[0].nombre,
-        description: data[0].descripcion,
-        category: data[0].categoria,
-        price: parseFloat(data[0].precio),
+        name: data[0].name,
+        description: data[0].description,
+        category: data[0].category,
+        price: parseFloat(data[0].price),
         stock: parseInt(data[0].stock)
       };
       
