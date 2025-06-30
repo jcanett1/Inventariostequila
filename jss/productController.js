@@ -9,35 +9,46 @@ class ProductController {
 
   static async add(product) {
   try {
-    // Validación básica de los datos del producto
-    if (!product.name || !product.price) {
-      throw new Error('Nombre y precio son campos requeridos');
+    // Validación exhaustiva de los datos
+    if (!product.name || typeof product.name !== 'string') {
+      throw new Error('Nombre del producto inválido');
     }
+
+    // Convertir y validar el precio
+    const price = parseFloat(product.price);
+    if (isNaN(price) {
+      throw new Error('Precio debe ser un número válido');
+    }
+
+    // Convertir y validar el stock
+    const stock = parseInt(product.stock) || 0;
 
     const { data, error } = await supabase
       .from('productos')
       .insert([{
-        nombre: product.name,
-        descripcion: product.description || '',
-        categoria: product.category || 'sin-categoria',
-        precio: Number(product.price),
-        stock: Number(product.stock) || 0
+        nombre: product.name.trim(),
+        descripcion: product.description?.trim() || '',
+        categoria: product.category?.trim() || 'general',
+        precio: price,
+        stock: stock
       }])
-      .select();
+      .select('*'); // Asegúrate de seleccionar todos los campos
 
     if (error) {
-      console.error("Error al guardar producto:", error.message);
-      throw error;
+      console.error("Error Supabase:", error);
+      throw new Error(`Error al guardar: ${error.message}`);
     }
 
-    // Actualiza la UI después de agregar
-    await UIController.updateProductList();
-    await UIController.updateCategoryChart();
+    if (!data || data.length === 0) {
+      throw new Error('No se recibieron datos de respuesta');
+    }
 
-    return data?.[0] || null;
+    console.log('Producto agregado:', data[0]);
+    return data[0];
+    
   } catch (error) {
     console.error('Error en Product.add:', error);
-    App.showErrorState('Error al agregar producto');
+    App.showErrorState(error.message);
     return null;
   }
 }
