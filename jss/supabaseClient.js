@@ -8,3 +8,5 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
     persistSession: false // Recomendado para evitar problemas de caché
   }
 })
+
+export default supabase
