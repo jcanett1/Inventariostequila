@@ -23,10 +23,8 @@ class MovementController {
 
     return data.map(entry => ({
       id: entry.id,
-      productId: entry.product_id,
-      supplierId: entry.supplier_id,
-      productName: entry.productos?.nombre || 'Desconocido',
-      supplierName: entry.proveedores?.name || 'Desconocido',
+      productName: entry.productos?.nombre || 'Desconocido', // ✅ Aquí cambiamos ID por NOMBRE
+      supplierName: entry.proveedores?.name || 'Desconocido', // ✅ Aquí cambiamos ID por NOMBRE
       quantity: entry.quantity,
       date: entry.date,
       notes: entry.notes
@@ -52,8 +50,7 @@ class MovementController {
 
     return data.map(output => ({
       id: output.id,
-      productId: output.product_id,
-      productName: output.productos?.nombre || 'Desconocido',
+      productName: output.productos?.nombre || 'Desconocido', // ✅ Aquí cambiamos ID por NOMBRE
       quantity: output.quantity,
       date: output.date,
       reason: output.reason,
@@ -78,8 +75,8 @@ class MovementController {
 
     return {
       id: data[0].id,
-      productId: data[0].product_id,
-      supplierId: data[0].supplier_id,
+      productName: data[0].productos?.nombre || 'Desconocido',
+      supplierName: data[0].proveedores?.name || 'Desconocido',
       quantity: data[0].quantity,
       date: data[0].date,
       notes: data[0].notes
@@ -103,7 +100,7 @@ class MovementController {
 
     return {
       id: data[0].id,
-      productId: data[0].product_id,
+      productName: data[0].productos?.nombre || 'Desconocido',
       quantity: data[0].quantity,
       date: data[0].date,
       reason: data[0].reason,
@@ -134,8 +131,6 @@ class MovementController {
 
     return data.map(entry => ({
       id: entry.id,
-      productId: entry.product_id,
-      supplierId: entry.supplier_id,
       productName: entry.productos?.nombre || 'Desconocido',
       supplierName: entry.proveedores?.name || 'Desconocido',
       quantity: entry.quantity,
@@ -166,7 +161,6 @@ class MovementController {
 
     return data.map(output => ({
       id: output.id,
-      productId: output.product_id,
       productName: output.productos?.nombre || 'Desconocido',
       quantity: output.quantity,
       date: output.date,
