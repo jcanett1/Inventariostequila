@@ -23,21 +23,21 @@ class UIController {
       return;
     }
 
-    products.forEach(p => {
-      const row = document.createElement("tr");
-      row.innerHTML = `
-        <td>${p.nombre}</td>
-        <td>${p.categoria}</td>
-        <td>$${parseFloat(p.precio).toFixed(2)}</td>
-        <td>${p.stock}</td>
-        <td>
-          <button class="btn btn-sm btn-outline-primary edit-product" data-id="${p.id}">Editar</button>
-          <button class="btn btn-sm btn-outline-danger delete-product" data-id="${p.id}">Eliminar</button>
-        </td>
-      `;
-      tbody.appendChild(row);
-    });
-  }
+   products.forEach(p => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${p.name || "Sin nombre"}</td>       <!-- Cambiado: p.nombre → p.name -->
+      <td>${p.category || "General"}</td>      <!-- Cambiado: p.categoria → p.category -->
+      <td>$${(p.price || 0).toFixed(2)}</td>  <!-- Cambiado: p.precio → p.price -->
+      <td>${p.stock || 0}</td>
+      <td>
+        <button class="btn btn-sm btn-outline-primary edit-product" data-id="${p.id}">Editar</button>
+        <button class="btn btn-sm btn-outline-danger delete-product" data-id="${p.id}">Eliminar</button>
+      </td>
+    `;
+    tbody.appendChild(row);
+  });
+}
 
   static async updateCategoryChart() {
     const products = await ProductController.getAll();
