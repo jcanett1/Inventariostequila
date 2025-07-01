@@ -5,12 +5,62 @@ import ChartController from './chartController.js';
 
 class UIController {
   static async init() {
+    await this.setupEventListeners();
     await this.loadProductsTable();
     await this.loadSuppliersTable();
     await this.loadMovementsTab();
     await this.updateCategoryChart();
     await this.updateMovementsChart(30);
     await this.loadLowStockTable();
+  }
+
+  static async setupEventListeners() {
+    // Formulario de agregar producto
+    document.getElementById("productoForm")?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      
+      try {
+        const newProduct = {
+          name: document.getElementById("nombreProducto").value.trim(),
+          description: document.getElementById("descripcionProducto").value.trim(),
+          category: document.getElementById("categoriaProducto").value,
+          price: parseFloat(document.getElementById("precioProducto").value),
+          stock: 0
+        };
+
+        if (!newProduct.name || isNaN(newProduct.price)) {
+          Swal.fire("Error", "Nombre y precio son requeridos", "error");
+          return;
+        }
+
+        await ProductController.add(newProduct);
+        await this.loadProductsTable();
+        e.target.reset();
+        Swal.fire("Éxito", "Producto agregado correctamente", "success");
+      } catch (error) {
+        console.error("Error al agregar producto:", error);
+        Swal.fire("Error", "No se pudo agregar el producto", "error");
+      }
+    });
+
+    // Listeners para botones de editar/eliminar
+    document.getElementById("productosTableBody")?.addEventListener("click", async (e) => {
+      if (e.target.classList.contains("delete-product")) {
+        const id = e.target.dataset.id;
+        await this.deleteProduct(id);
+      }
+      // Agregar lógica para editar
+    });
+  }
+
+  static async deleteProduct(id) {
+    try {
+      await ProductController.delete(id);
+      await this.loadProductsTable();
+      Swal.fire("Éxito", "Producto eliminado", "success");
+    } catch (error) {
+      Swal.fire("Error", "No se pudo eliminar", "error");
+    }
   }
 
   static async loadProductsTable() {
