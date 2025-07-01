@@ -5,7 +5,7 @@ import supabase from './supabaseClient.js';
 class SupplierController {
   // Obtener todos los proveedores
   static async getAll() {
-    const { data, error } = await supabase.from('proveedores').select('*');
+    const { data, error } = await supabase.from('"Proveedores"').select('*');
     if (error) console.error("Error obteniendo proveedores:", error.message);
     return data || [];
   }
