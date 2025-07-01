@@ -172,18 +172,33 @@ class UIController {
     ChartController.initMovementsChart(entries, outputs, days);
   }
 
-  static async loadSuppliersTable() {
+ static async loadSuppliersTable() {
   try {
     const tbody = document.getElementById("proveedoresTableBody");
-    if (!tbody) {
-      console.log("Tabla de proveedores no encontrada - Vista no activa");
-      return;
-    }
+    if (!tbody) return;
+
+    // Mostrar estado de carga
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="6" class="text-center">
+          <div class="spinner-border spinner-border-sm text-primary" role="status">
+            <span class="visually-hidden">Cargando...</span>
+          </div>
+          Cargando proveedores...
+        </td>
+      </tr>
+    `;
 
     const suppliers = await SupplierController.getAll();
     
-    if (!suppliers?.length) {
-      tbody.innerHTML = "<tr><td colspan='6'>No hay proveedores registrados</td></tr>";
+    if (!suppliers || !suppliers.length) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6" class="text-center text-muted">
+            No hay proveedores registrados
+          </td>
+        </tr>
+      `;
       return;
     }
 
@@ -205,12 +220,18 @@ class UIController {
       </tr>
     `).join("");
 
-    // Inicializar tooltips de Bootstrap si es necesario
-    $('[data-bs-toggle="tooltip"]').tooltip();
-    
   } catch (error) {
     console.error("Error cargando proveedores:", error);
-    Swal.fire("Error", "No se pudieron cargar los proveedores", "error");
+    const tbody = document.getElementById("proveedoresTableBody");
+    if (tbody) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6" class="text-center text-danger">
+            <i class="fas fa-exclamation-triangle"></i> Error cargando proveedores
+          </td>
+        </tr>
+      `;
+    }
   }
 }
 
