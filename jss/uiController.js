@@ -6,6 +6,7 @@ import ChartController from './chartController.js';
 class UIController {
   static async init() {
     await this.setupEventListeners();
+    await this.setupSupplierListeners();
     await this.loadProductsTable();
     await this.loadSuppliersTable();
     await this.loadMovementsTab();
@@ -62,6 +63,64 @@ class UIController {
       Swal.fire("Error", "No se pudo eliminar", "error");
     }
   }
+
+
+
+
+  
+  static async setupSupplierListeners() {
+  const form = document.getElementById("proveedorForm");
+  if (!form) return;
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    
+    const submitBtn = form.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Guardando...';
+
+    try {
+      const newSupplier = {
+        name: document.getElementById("nombreProveedor").value.trim(),
+        contact: document.getElementById("contactoProveedor").value.trim(),
+        email: document.getElementById("emailProveedor").value.trim(),
+        phone: document.getElementById("telefonoProveedor").value.trim(),
+        credit: parseFloat(document.getElementById("creditoProveedor").value) || 0
+      };
+
+      // Validación básica
+      if (!newSupplier.name) {
+        throw new Error('El nombre del proveedor es requerido');
+      }
+
+      const result = await SupplierController.add(newSupplier);
+      console.log('Proveedor agregado:', result);
+      
+      form.reset();
+      await this.loadSuppliersTable();
+      
+      Swal.fire({
+        icon: 'success',
+        title: 'Proveedor agregado',
+        showConfirmButton: false,
+        timer: 1500
+      });
+    } catch (error) {
+      console.error('Error:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: error.message || 'No se pudo agregar el proveedor'
+      });
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Guardar Proveedor';
+    }
+  });
+}
+
+
+
 
   static async loadProductsTable() {
   const tbody = document.getElementById("productosTableBody");
