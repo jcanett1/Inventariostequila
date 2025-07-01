@@ -6,28 +6,19 @@ import ChartController from './chartController.js';
 class UIController {
   static async init() {
     try {
-      // Configurar listeners básicos primero
       await this.setupEventListeners();
-      
-      // Detectar qué módulo estamos usando
       const path = window.location.pathname;
-      
       if (path.includes('productos')) {
         await this.loadProductsTable();
         await this.updateCategoryChart();
-      }
-      else if (path.includes('proveedores')) {
+      } else if (path.includes('proveedores')) {
         await this.setupSupplierListeners();
         await this.loadSuppliersTable();
-      }
-      else if (path.includes('movimientos')) {
+      } else if (path.includes('movimientos')) {
         await this.loadMovementsTab();
         await this.updateMovementsChart(30);
       }
-      
-      // Carga común a todas las páginas
       await this.loadLowStockTable();
-      
     } catch (error) {
       console.error("Error en inicialización:", error);
       Swal.fire({
@@ -40,13 +31,11 @@ class UIController {
   }
 
   static async setupEventListeners() {
-    // Formulario de productos
+    // Listeners para productos
     document.getElementById("productoForm")?.addEventListener("submit", async (e) => {
       e.preventDefault();
-      
       const form = e.target;
       const submitBtn = form.querySelector('button[type="submit"]');
-      
       try {
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Guardando...';
@@ -66,13 +55,14 @@ class UIController {
         await ProductController.add(newProduct);
         await this.loadProductsTable();
         form.reset();
-        
+
         Swal.fire({
           icon: 'success',
           title: 'Producto agregado',
           showConfirmButton: false,
           timer: 1500
         });
+
       } catch (error) {
         console.error("Error al agregar producto:", error);
         Swal.fire({
@@ -92,7 +82,6 @@ class UIController {
       if (deleteBtn) {
         await this.deleteProduct(deleteBtn.dataset.id);
       }
-      
       const editBtn = e.target.closest('.edit-product');
       if (editBtn) {
         await this.editProduct(editBtn.dataset.id);
@@ -103,50 +92,49 @@ class UIController {
   static async setupSupplierListeners() {
     const form = document.getElementById("proveedorForm");
     if (!form) return;
-
-    // Eliminar listener previo para evitar duplicados
     form.removeEventListener("submit", this.handleSupplierSubmit);
     form.addEventListener("submit", this.handleSupplierSubmit);
   }
 
   static handleSupplierSubmit = async (e) => {
     e.preventDefault();
-    
     const form = e.target;
     const submitBtn = form.querySelector('button[type="submit"]');
-    
+
     try {
       submitBtn.disabled = true;
       submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Guardando...';
 
       const newSupplier = {
-  name: document.getElementById("nombreProveedor").value.trim(),
-  contact: document.getElementById("contactoProveedor").value.trim(),
-  email: document.getElementById("emailProveedor").value.trim(),
-  phone: document.getElementById("telefonoProveedor").value.trim(),
-  credit: parseFloat(document.getElementById("creditoProveedor").value) || 0,
-  materials: '' // opcional si no lo usas ahora
-};
+        name: document.getElementById("nombreProveedor").value.trim(),
+        contact: document.getElementById("contactoProveedor").value.trim(),
+        email: document.getElementById("emailProveedor").value.trim(),
+        phone: document.getElementById("telefonoProveedor").value.trim(),
+        credit: parseFloat(document.getElementById("creditoProveedor").value) || 0,
+        materials: ''
+      };
 
       if (!newSupplier.name) {
         throw new Error('El nombre del proveedor es requerido');
       }
+
       if (newSupplier.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newSupplier.email)) {
         throw new Error('El formato del email es inválido');
       }
 
       const result = await SupplierController.add(newSupplier);
       console.log('Proveedor agregado:', result);
-      
+
       form.reset();
       await this.loadSuppliersTable();
-      
+
       Swal.fire({
         icon: 'success',
         title: 'Proveedor agregado',
         showConfirmButton: false,
         timer: 1500
       });
+
     } catch (error) {
       console.error('Error al agregar proveedor:', error);
       Swal.fire({
@@ -169,22 +157,17 @@ class UIController {
       tbody.innerHTML = `
         <tr>
           <td colspan="5" class="text-center py-4">
-            <div class="spinner-border text-primary" role="status">
-              <span class="visually-hidden">Cargando...</span>
-            </div>
+            <div class="spinner-border text-primary" role="status"></div>
             <p class="mt-2">Cargando productos...</p>
           </td>
         </tr>
       `;
 
       const products = await ProductController.getAll();
-      
       if (!products?.length) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="5" class="text-center py-4 text-muted">
-              No hay productos registrados
-            </td>
+            <td colspan="5" class="text-center py-4 text-muted">No hay productos registrados</td>
           </tr>
         `;
         return;
@@ -213,18 +196,13 @@ class UIController {
         </tr>
       `).join("");
 
-      // Inicializar tooltips
-    document.querySelectorAll('[title]').forEach(el => {
-    new bootstrap.Tooltip(el);
-});
-
+      document.querySelectorAll('[title]').forEach(el => new bootstrap.Tooltip(el));
     } catch (error) {
       console.error("Error cargando productos:", error);
       tbody.innerHTML = `
         <tr>
           <td colspan="5" class="text-center py-4 text-danger">
-            <i class="fas fa-exclamation-circle me-2"></i>
-            Error al cargar productos: ${error.message}
+            <i class="fas fa-exclamation-circle me-2"></i>Error al cargar productos: ${error.message}
           </td>
         </tr>
       `;
@@ -239,22 +217,17 @@ class UIController {
       tbody.innerHTML = `
         <tr>
           <td colspan="6" class="text-center py-4">
-            <div class="spinner-border text-primary" role="status">
-              <span class="visually-hidden">Cargando...</span>
-            </div>
+            <div class="spinner-border text-primary" role="status"></div>
             <p class="mt-2">Cargando proveedores...</p>
           </td>
         </tr>
       `;
 
       const suppliers = await SupplierController.getAll();
-      
       if (!suppliers?.length) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="6" class="text-center py-4 text-muted">
-              No hay proveedores registrados
-            </td>
+            <td colspan="6" class="text-center py-4 text-muted">No hay proveedores registrados</td>
           </tr>
         `;
         return;
@@ -262,11 +235,11 @@ class UIController {
 
       tbody.innerHTML = suppliers.map(supplier => `
         <tr>
-         <td>${supplier.name || "Sin nombre"}</td>
-<td>${supplier.contact || "—"}</td>
-<td>${supplier.email ? `<a href="mailto:${supplier.email}">${supplier.email}</a>` : "—"}</td>
-<td>${supplier.phone ? `<a href="tel:${supplier.phone}">${supplier.phone}</a>` : "—"}</td>
-<td class="text-end">$${(supplier.credit || 0).toFixed(2)}</td>
+          <td>${supplier.name || "Sin nombre"}</td>
+          <td>${supplier.contact || "—"}</td>
+          <td>${supplier.email ? `<a href="mailto:${supplier.email}">${supplier.email}</a>` : "—"}</td>
+          <td>${supplier.phone ? `<a href="tel:${supplier.phone}">${supplier.phone}</a>` : "—"}</td>
+          <td class="text-end">$${(supplier.credit || 0).toFixed(2)}</td>
           <td class="text-center">
             <div class="btn-group btn-group-sm">
               <button class="btn btn-outline-primary edit-supplier" data-id="${supplier.id}" title="Editar">
@@ -280,18 +253,13 @@ class UIController {
         </tr>
       `).join("");
 
-      // Inicializar tooltips
-    document.querySelectorAll('[title]').forEach(el => {
-    new bootstrap.Tooltip(el);
-});
-
+      document.querySelectorAll('[title]').forEach(el => new bootstrap.Tooltip(el));
     } catch (error) {
       console.error("Error cargando proveedores:", error);
       tbody.innerHTML = `
         <tr>
           <td colspan="6" class="text-center py-4 text-danger">
-            <i class="fas fa-exclamation-circle me-2"></i>
-            Error al cargar proveedores: ${error.message}
+            <i class="fas fa-exclamation-circle me-2"></i>Error al cargar proveedores: ${error.message}
           </td>
         </tr>
       `;
@@ -346,23 +314,122 @@ class UIController {
     try {
       const products = await ProductController.getAll();
       const categoryMap = {};
-
       products.forEach(p => {
         const category = p.category || p.categoria;
         if (!categoryMap[category]) categoryMap[category] = 0;
         categoryMap[category] += p.stock || 0;
       });
-
       ChartController.initCategoryChart(categoryMap);
     } catch (error) {
       console.error("Error actualizando gráfico de categorías:", error);
     }
   }
 
+  static async updateMovementsChart(days = 30) {
+    try {
+      const today = new Date();
+      const startDate = new Date(today.getTime() - days * 86400000);
+      const [entries, outputs] = await Promise.all([
+        MovementController.getEntriesByDate(startDate.toISOString().split("T")[0], today.toISOString().split("T")[0]),
+        MovementController.getOutputsByDate(startDate.toISOString().split("T")[0], today.toISOString().split("T")[0])
+      ]);
+      ChartController.initMovementsChart(entries, outputs);
+    } catch (error) {
+      console.error("Error actualizando gráfico de movimientos:", error);
+    }
+  }
 
+  static async loadMovementsTab() {
+    const tabContent = document.getElementById('movementsTabContent');
+    if (!tabContent) return;
 
+    try {
+      tabContent.innerHTML = `
+        <div class="text-center py-4">
+          <div class="spinner-border text-primary" role="status"></div>
+          <p class="mt-2">Cargando entradas y salidas...</p>
+        </div>
+      `;
 
-static setupEntryFormListener() {
+      const [entries, outputs] = await Promise.all([
+        MovementController.getAllEntries(),
+        MovementController.getAllOutputs()
+      ]);
+
+      const html = `
+        <!-- Pestañas -->
+        <ul class="nav nav-tabs mb-3" id="movementTabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="entradas-tab" data-bs-toggle="tab" data-bs-target="#entradas" type="button" role="tab" aria-controls="entradas" aria-selected="true">Entradas</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="salidas-tab" data-bs-toggle="tab" data-bs-target="#salidas" type="button" role="tab" aria-controls="salidas" aria-selected="false">Salidas</button>
+          </li>
+        </ul>
+
+        <div class="tab-content" id="movementTabsContent">
+          <!-- Tabla de Entradas -->
+          <div class="tab-pane fade show active" id="entradas" role="tabpanel" aria-labelledby="entradas-tab">
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead><tr><th>Producto</th><th>Proveedor</th><th>Cantidad</th><th>Fecha</th><th>Notas</th></tr></thead>
+                <tbody>
+                  ${entries.length ? entries.map(entry => `
+                    <tr>
+                      <td>${entry.productName}</td>
+                      <td>${entry.supplierName}</td>
+                      <td>${entry.quantity}</td>
+                      <td>${entry.date}</td>
+                      <td>${entry.notes || '-'}</td>
+                    </tr>
+                  `).join('') : `
+                    <tr><td colspan="5" class="text-center text-muted">No hay entradas registradas</td></tr>
+                  `}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Tabla de Salidas -->
+          <div class="tab-pane fade" id="salidas" role="tabpanel" aria-labelledby="salidas-tab">
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead><tr><th>Producto</th><th>Cantidad</th><th>Fecha</th><th>Motivo</th><th>Notas</th></tr></thead>
+                <tbody>
+                  ${outputs.length ? outputs.map(output => `
+                    <tr>
+                      <td>${output.productName}</td>
+                      <td>${output.quantity}</td>
+                      <td>${output.date}</td>
+                      <td>${output.reason || '-'}</td>
+                      <td>${output.notes || '-'}</td>
+                    </tr>
+                  `).join('') : `
+                    <tr><td colspan="5" class="text-center text-muted">No hay salidas registradas</td></tr>
+                  `}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+
+      tabContent.innerHTML = html;
+
+      const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+      [...tooltipTriggerList].map(tooltipEl => new bootstrap.Tooltip(tooltipEl));
+
+    } catch (error) {
+      console.error("Error al cargar movimientos:", error);
+      tabContent.innerHTML = `
+        <div class="alert alert-danger text-center">
+          <i class="fas fa-exclamation-triangle me-2"></i>Error al cargar movimientos: ${error.message}
+        </div>
+      `;
+    }
+  }
+
+  static setupEntryFormListener() {
     const form = document.getElementById('entradaForm');
     if (!form) return;
 
@@ -381,16 +448,8 @@ static setupEntryFormListener() {
       }
 
       try {
-        await MovementController.addEntry({
-          productId,
-          supplierId,
-          quantity,
-          date,
-          notes
-        });
-
+        await MovementController.addEntry({ productId, supplierId, quantity, date, notes });
         Swal.fire('Éxito', 'Entrada registrada correctamente', 'success');
-
         form.reset();
       } catch (error) {
         console.error('Error al guardar entrada:', error);
@@ -398,162 +457,6 @@ static setupEntryFormListener() {
       }
     });
   }
-}
-
-
-
-
-
-
-
-
-  
-  static async updateMovementsChart(days = 30) {
-    try {
-      const today = new Date();
-      const startDate = new Date(today.getTime() - days * 86400000);
-
-      const [entries, outputs] = await Promise.all([
-        MovementController.getEntriesByDate(startDate.toISOString().split("T")[0], today.toISOString().split("T")[0]),
-        MovementController.getOutputsByDate(startDate.toISOString().split("T")[0], today.toISOString().split("T")[0])
-      ]);
-
-      ChartController.initMovementsChart(entries, outputs, days);
-    } catch (error) {
-      console.error("Error actualizando gráfico de movimientos:", error);
-    }
-  }
-
-  // uiController.js
-
-import MovementController from './movementController.js';
-
-class UIController {
-  // ... otras funciones ...
-
-  /**
-   * Carga dinámicamente las pestañas de movimientos (Entradas y Salidas)
-   */
-  static async loadMovementsTab() {
-    const tabContent = document.getElementById('movementsTabContent');
-    if (!tabContent) return;
-
-    try {
-      tabContent.innerHTML = `
-        <div class="text-center py-4">
-          <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Cargando movimientos...</span>
-          </div>
-          <p class="mt-2">Cargando entradas y salidas...</p>
-        </div>
-      `;
-
-      const [entries, outputs] = await Promise.all([
-        MovementController.getAllEntries(),
-        MovementController.getAllOutputs()
-      ]);
-
-      const html = `
-        <!-- Pestañas -->
-        <ul class="nav nav-tabs mb-3" id="movementTabs" role="tablist">
-          <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="entradas-tab" data-bs-toggle="tab" data-bs-target="#entradas" type="button" role="tab" aria-controls="entradas" aria-selected="true">
-              Entradas
-            </button>
-          </li>
-          <li class="nav-item" role="presentation">
-            <button class="nav-link" id="salidas-tab" data-bs-toggle="tab" data-bs-target="#salidas" type="button" role="tab" aria-controls="salidas" aria-selected="false">
-              Salidas
-            </button>
-          </li>
-        </ul>
-
-        <div class="tab-content" id="movementTabsContent">
-          <!-- Tabla de Entradas -->
-          <div class="tab-pane fade show active" id="entradas" role="tabpanel" aria-labelledby="entradas-tab">
-            <div class="table-responsive">
-              <table class="table table-hover">
-                <thead>
-                  <tr>
-                    <th>Producto</th>
-                    <th>Proveedor</th>
-                    <th>Cantidad</th>
-                    <th>Fecha</th>
-                    <th>Notas</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${entries.length ? entries.map(entry => `
-                    <tr>
-                      <td>${entry.productName}</td>
-                      <td>${entry.supplierName}</td>
-                      <td>${entry.quantity}</td>
-                      <td>${entry.date}</td>
-                      <td>${entry.notes || '-'}</td>
-                    </tr>
-                  `).join('') : `
-                    <tr>
-                      <td colspan="5" class="text-center text-muted">No hay entradas registradas</td>
-                    </tr>
-                  `}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <!-- Tabla de Salidas -->
-          <div class="tab-pane fade" id="salidas" role="tabpanel" aria-labelledby="salidas-tab">
-            <div class="table-responsive">
-              <table class="table table-hover">
-                <thead>
-                  <tr>
-                    <th>Producto</th>
-                    <th>Cantidad</th>
-                    <th>Fecha</th>
-                    <th>Motivo</th>
-                    <th>Notas</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${outputs.length ? outputs.map(output => `
-                    <tr>
-                      <td>${output.productName}</td>
-                      <td>${output.quantity}</td>
-                      <td>${output.date}</td>
-                      <td>${output.reason || '-'}</td>
-                      <td>${output.notes || '-'}</td>
-                    </tr>
-                  `).join('') : `
-                    <tr>
-                      <td colspan="5" class="text-center text-muted">No hay salidas registradas</td>
-                    </tr>
-                  `}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      `;
-
-      tabContent.innerHTML = html;
-
-      // Reinicializar tooltips o componentes de Bootstrap si usas
-      const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-      [...tooltipTriggerList].map(tooltipEl => new bootstrap.Tooltip(tooltipEl));
-
-    } catch (error) {
-      console.error("Error al cargar movimientos:", error);
-      tabContent.innerHTML = `
-        <div class="alert alert-danger text-center">
-          <i class="fas fa-exclamation-triangle me-2"></i>
-          Error al cargar los movimientos: ${error.message}
-        </div>
-      `;
-    }
-  }
-}
-
-export default UIController;
 
   static async loadLowStockTable() {
     // Implementación pendiente
