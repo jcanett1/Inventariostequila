@@ -3,15 +3,17 @@
 import supabase from './supabaseClient.js';
 
 class SupplierController {
+  // Obtener todos los proveedores
   static async getAll() {
-    const { data, error } = await supabase.from('"Proveedores"').select('*');
+    const { data, error } = await supabase.from('proveedores').select('*');
     if (error) console.error("Error obteniendo proveedores:", error.message);
     return data || [];
   }
 
+  // Obtener un proveedor por ID
   static async getById(id) {
     const { data, error } = await supabase
-      .from('"Proveedores"')
+      .from('proveedores')
       .select('*')
       .eq('id', id)
       .single();
@@ -19,6 +21,7 @@ class SupplierController {
     return data || null;
   }
 
+  // Añadir un nuevo proveedor
   static async add(supplier) {
     try {
       if (!supplier.name || typeof supplier.name !== 'string') {
@@ -26,7 +29,7 @@ class SupplierController {
       }
 
       const { data, error } = await supabase
-        .from('"Proveedores"') // ← Aquí corregimos
+        .from('proveedores')
         .insert([{
           nombre: supplier.name.trim(),
           contacto: supplier.contact?.trim() || '',
@@ -51,9 +54,10 @@ class SupplierController {
     }
   }
 
+  // Actualizar un proveedor existente
   static async update(id, updatedSupplier) {
     const { data, error } = await supabase
-      .from('"Proveedores"') // ← Aquí corregimos
+      .from('proveedores')
       .update({
         nombre: updatedSupplier.name,
         contacto: updatedSupplier.contact,
@@ -69,9 +73,10 @@ class SupplierController {
     return data?.[0] || null;
   }
 
+  // Eliminar un proveedor por ID
   static async delete(id) {
     const { error } = await supabase
-      .from('"Proveedores"') // ← Aquí corregimos
+      .from('proveedores')
       .delete()
       .eq('id', id);
 
