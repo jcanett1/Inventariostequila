@@ -544,9 +544,7 @@ static setupEntryFormListener() {
   }
 }
 
-export default UIController;
-
-  static async loadLowStockTable() {
+static async loadLowStockTable() {
     // Implementación pendiente
   }
 }
