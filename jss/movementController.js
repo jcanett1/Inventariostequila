@@ -62,10 +62,10 @@ class MovementController {
   }
 
   // Añadir una entrada
- static async addEntry(entry) {
+static async addEntry(entry) {
   const { data, error } = await supabase.from('entradas').insert([{
-    product_id: entry.productId,     // ✅ UUID como string (no uses parseInt)
-    supplier_id: entry.supplierId,   // ✅ UUID como string
+    product_id: entry.productId,   // UUID como string
+    supplier_id: entry.supplierId, // UUID como string
     quantity: parseInt(entry.quantity),
     date: entry.date,
     notes: entry.notes || ''
@@ -76,13 +76,13 @@ class MovementController {
     quantity,
     date,
     notes,
-    productos!inner(name),      // Nombre del producto desde la relación
-    proveedores!inner(name)     // Nombre del proveedor desde la relación
+    productos!inner(name),
+    proveedores!inner(name)
   `);
 
   if (error) {
     console.error("Error al guardar entrada:", error.message);
-    throw new Error(`No se pudo registrar la entrada: ${error.message}`);
+    return null;
   }
 
   return {
