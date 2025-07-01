@@ -14,21 +14,21 @@ class UIController {
   }
 
   static async loadProductsTable() {
-    const tbody = document.getElementById("productosTableBody");
-    const products = await ProductController.getAll();
-    tbody.innerHTML = "";
+  const tbody = document.getElementById("productosTableBody");
+  const products = await ProductController.getAll();
+  tbody.innerHTML = "";
 
-    if (!products.length) {
-      tbody.innerHTML = "<tr><td colspan='5'>No hay productos</td></tr>";
-      return;
-    }
+  if (!products?.length) {
+    tbody.innerHTML = "<tr><td colspan='5'>No hay productos</td></tr>";
+    return;
+  }
 
-   products.forEach(p => {
+  products.forEach(p => {
     const row = document.createElement("tr");
     row.innerHTML = `
-      <td>${p.name || "Sin nombre"}</td>       <!-- Cambiado: p.nombre → p.name -->
-      <td>${p.category || "General"}</td>      <!-- Cambiado: p.categoria → p.category -->
-      <td>$${(p.price || 0).toFixed(2)}</td>  <!-- Cambiado: p.precio → p.price -->
+      <td>${p.name || p.nombre || "Sin nombre"}</td>
+      <td>${p.category || p.categoria || "General"}</td>
+      <td>$${(p.price || p.precio || 0).toFixed(2)}</td>
       <td>${p.stock || 0}</td>
       <td>
         <button class="btn btn-sm btn-outline-primary edit-product" data-id="${p.id}">Editar</button>
@@ -38,7 +38,6 @@ class UIController {
     tbody.appendChild(row);
   });
 }
-
   static async updateCategoryChart() {
   const products = await ProductController.getAll();
   const categoryMap = {};
