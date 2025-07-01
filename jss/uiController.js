@@ -8,11 +8,9 @@ import ChartController from './chartController.js';
 class UIController {
   static async init() {
     try {
-      // Configurar listeners básicos primero
       await this.setupEventListeners();
-
-      // Detectar qué módulo estamos usando
       const path = window.location.pathname;
+
       if (path.includes('productos')) {
         await this.loadProductsTable();
         await this.updateCategoryChart();
@@ -22,10 +20,15 @@ class UIController {
       } else if (path.includes('movimientos')) {
         await this.loadMovementsTab();
         await this.updateMovementsChart(30);
+        await this.loadProductOptions('productoEntrada');
+        await this.loadProductOptions('productoSalida');
+        await this.loadSupplierOptions('proveedorEntrada');
+        this.setupEntryFormListener();
+        this.setupOutputFormListener();
       }
 
-      // Carga común a todas las páginas
       await this.loadLowStockTable();
+
     } catch (error) {
       console.error("Error en inicialización:", error);
       Swal.fire({
@@ -96,16 +99,12 @@ class UIController {
         await this.editProduct(editBtn.dataset.id);
       }
     });
-
-    // Listeners para formulario de entrada
-    this.setupEntryFormListener();
   }
 
   static async setupSupplierListeners() {
     const form = document.getElementById("proveedorForm");
     if (!form) return;
 
-    // Eliminar listener previo para evitar duplicados
     form.removeEventListener("submit", this.handleSupplierSubmit);
     form.addEventListener("submit", this.handleSupplierSubmit);
   }
@@ -171,9 +170,7 @@ class UIController {
       tbody.innerHTML = `
         <tr>
           <td colspan="5" class="text-center py-4">
-            <div class="spinner-border text-primary" role="status">
-              <span class="visually-hidden">Cargando...</span>
-            </div>
+            <div class="spinner-border text-primary" role="status"></div>
             <p class="mt-2">Cargando productos...</p>
           </td>
         </tr>
@@ -213,7 +210,6 @@ class UIController {
         </tr>
       `).join("");
 
-      // Inicializar tooltips
       document.querySelectorAll('[title]').forEach(el => new bootstrap.Tooltip(el));
 
     } catch (error) {
@@ -236,9 +232,7 @@ class UIController {
       tbody.innerHTML = `
         <tr>
           <td colspan="6" class="text-center py-4">
-            <div class="spinner-border text-primary" role="status">
-              <span class="visually-hidden">Cargando...</span>
-            </div>
+            <div class="spinner-border text-primary" role="status"></div>
             <p class="mt-2">Cargando proveedores...</p>
           </td>
         </tr>
@@ -275,7 +269,6 @@ class UIController {
         </tr>
       `).join("");
 
-      // Inicializar tooltips
       document.querySelectorAll('[title]').forEach(el => new bootstrap.Tooltip(el));
 
     } catch (error) {
@@ -288,6 +281,126 @@ class UIController {
         </tr>
       `;
     }
+  }
+
+  static async loadProductOptions(selectId = 'productoEntrada') {
+    const select = document.getElementById(selectId);
+    if (!select) return;
+
+    try {
+      const products = await ProductController.getAll();
+
+      select.innerHTML = '<option value="">Selecciona un producto</option>';
+
+      products.forEach(product => {
+        const option = document.createElement('option');
+        option.value = product.id;
+        option.textContent = product.name || 'Sin nombre';
+        select.appendChild(option);
+      });
+
+    } catch (error) {
+      console.error("Error cargando productos:", error);
+      select.innerHTML = '<option value="">Error al cargar productos</option>';
+    }
+  }
+
+  static async loadSupplierOptions(selectId = 'proveedorEntrada') {
+    const select = document.getElementById(selectId);
+    if (!select) return;
+
+    try {
+      const suppliers = await SupplierController.getAll();
+
+      select.innerHTML = '<option value="">Selecciona un proveedor</option>';
+
+      suppliers.forEach(supplier => {
+        const option = document.createElement('option');
+        option.value = supplier.id;
+        option.textContent = supplier.name || 'Sin nombre';
+        select.appendChild(option);
+      });
+
+    } catch (error) {
+      console.error("Error cargando proveedores:", error);
+      select.innerHTML = '<option value="">Error al cargar proveedores</option>';
+    }
+  }
+
+  static async setupEntryFormListener() {
+    const form = document.getElementById('entradaForm');
+    if (!form) return;
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const productId = document.getElementById('productoEntrada').value;
+      const supplierId = document.getElementById('proveedorEntrada').value;
+      const quantity = document.getElementById('cantidadEntrada').value;
+      const date = document.getElementById('fechaEntrada').value;
+      const notes = document.getElementById('notasEntrada').value;
+
+      if (!productId || !supplierId || !quantity || !date) {
+        Swal.fire('Error', 'Todos los campos son obligatorios', 'error');
+        return;
+      }
+
+      try {
+        await MovementController.addEntry({
+          productId,
+          supplierId,
+          quantity,
+          date,
+          notes
+        });
+
+        Swal.fire('Éxito', 'Entrada registrada correctamente', 'success');
+        form.reset();
+        await this.loadMovementsTab(); // Recargar pestaña de movimientos
+
+      } catch (error) {
+        console.error('Error al guardar entrada:', error);
+        Swal.fire('Error', 'No se pudo registrar la entrada', 'error');
+      }
+    });
+  }
+
+  static async setupOutputFormListener() {
+    const form = document.getElementById('salidaForm');
+    if (!form) return;
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const productId = document.getElementById('productoSalida').value;
+      const quantity = document.getElementById('cantidadSalida').value;
+      const date = document.getElementById('fechaSalida').value;
+      const reason = document.getElementById('motivoSalida').value;
+      const notes = document.getElementById('notasSalida').value;
+
+      if (!productId || !quantity || !date || !reason) {
+        Swal.fire('Error', 'Todos los campos son obligatorios', 'error');
+        return;
+      }
+
+      try {
+        await MovementController.addOutput({
+          productId,
+          quantity,
+          date,
+          reason,
+          notes
+        });
+
+        Swal.fire('Éxito', 'Salida registrada correctamente', 'success');
+        form.reset();
+        await this.loadMovementsTab(); // Recargar pestaña de movimientos
+
+      } catch (error) {
+        console.error('Error al guardar salida:', error);
+        Swal.fire('Error', 'No se pudo registrar la salida', 'error');
+      }
+    });
   }
 
   static async deleteProduct(id) {
@@ -348,6 +461,7 @@ class UIController {
       });
 
       ChartController.initCategoryChart(categoryMap);
+
     } catch (error) {
       console.error("Error actualizando gráfico de categorías:", error);
     }
@@ -356,10 +470,17 @@ class UIController {
   static async updateMovementsChart(days = 30) {
     try {
       const today = new Date();
-      const startDate = new Date(today.getTime() - days * 86400000); // días atrás
+      const startDate = new Date(today.getTime() - days * 86400000);
+
       const [entries, outputs] = await Promise.all([
-        MovementController.getEntriesByDate(startDate.toISOString().split("T")[0], today.toISOString().split("T")[0]),
-        MovementController.getOutputsByDate(startDate.toISOString().split("T")[0], today.toISOString().split("T")[0])
+        MovementController.getEntriesByDate(
+          startDate.toISOString().split("T")[0],
+          today.toISOString().split("T")[0]
+        ),
+        MovementController.getOutputsByDate(
+          startDate.toISOString().split("T")[0],
+          today.toISOString().split("T")[0]
+        )
       ]);
 
       ChartController.initMovementsChart(entries, outputs, days);
@@ -377,7 +498,7 @@ class UIController {
       tabContent.innerHTML = `
         <div class="text-center py-4">
           <div class="spinner-border text-primary" role="status"></div>
-          <p class="mt-2">Cargando entradas y salidas...</p>
+          <p class="mt-2">Cargando movimientos...</p>
         </div>
       `;
 
@@ -391,86 +512,60 @@ class UIController {
         <ul class="nav nav-tabs mb-3" id="movementTabs" role="tablist">
           <li class="nav-item" role="presentation">
             <button class="nav-link active" id="entradas-tab" data-bs-toggle="tab" data-bs-target="#entradas"
-                    type="button" role="tab" aria-controls="entradas" aria-selected="true">
-              Entradas
-            </button>
+                    type="button" role="tab" aria-controls="entradas" aria-selected="true">Entradas</button>
           </li>
           <li class="nav-item" role="presentation">
             <button class="nav-link" id="salidas-tab" data-bs-toggle="tab" data-bs-target="#salidas"
-                    type="button" role="tab" aria-controls="salidas" aria-selected="false">
-              Salidas
-            </button>
+                    type="button" role="tab" aria-controls="salidas" aria-selected="false">Salidas</button>
           </li>
         </ul>
 
-        <!-- Contenido de pestañas -->
         <div class="tab-content" id="movementTabsContent">
-          <!-- Tabla de Entradas -->
+          <!-- Entradas -->
           <div class="tab-pane fade show active" id="entradas" role="tabpanel">
-            <div class="table-responsive">
-              <table class="table table-hover">
-                <thead>
+            <table class="table table-hover">
+              <thead><tr><th>Fecha</th><th>Producto</th><th>Proveedor</th><th>Cantidad</th><th>Notas</th></tr></thead>
+              <tbody>
+                ${entries.length ? entries.map(entry => `
                   <tr>
-                    <th>Producto</th>
-                    <th>Proveedor</th>
-                    <th>Cantidad</th>
-                    <th>Fecha</th>
-                    <th>Notas</th>
+                    <td>${entry.date}</td>
+                    <td>${entry.productName}</td>
+                    <td>${entry.supplierName}</td>
+                    <td>${entry.quantity}</td>
+                    <td>${entry.notes || '-'}</td>
                   </tr>
-                </thead>
-                <tbody>
-                  ${entries.length ? entries.map(entry => `
-                    <tr>
-                      <td>${entry.productName}</td>
-                      <td>${entry.supplierName}</td>
-                      <td>${entry.quantity}</td>
-                      <td>${entry.date}</td>
-                      <td>${entry.notes || '-'}</td>
-                    </tr>
-                  `).join('') : `
-                    <tr><td colspan="5" class="text-center text-muted">No hay entradas registradas</td></tr>
-                  `}
-                </tbody>
-              </table>
-            </div>
+                `).join('') : `
+                  <tr><td colspan="5" class="text-center text-muted">No hay entradas registradas</td></tr>
+                `}
+              </tbody>
+            </table>
           </div>
 
-          <!-- Tabla de Salidas -->
+          <!-- Salidas -->
           <div class="tab-pane fade" id="salidas" role="tabpanel">
-            <div class="table-responsive">
-              <table class="table table-hover">
-                <thead>
+            <table class="table table-hover">
+              <thead><tr><th>Fecha</th><th>Producto</th><th>Cantidad</th><th>Motivo</th><th>Notas</th></tr></thead>
+              <tbody>
+                ${outputs.length ? outputs.map(output => `
                   <tr>
-                    <th>Producto</th>
-                    <th>Cantidad</th>
-                    <th>Fecha</th>
-                    <th>Motivo</th>
-                    <th>Notas</th>
+                    <td>${output.date}</td>
+                    <td>${output.productName}</td>
+                    <td>${output.quantity}</td>
+                    <td>${output.reason || '-'}</td>
+                    <td>${output.notes || '-'}</td>
                   </tr>
-                </thead>
-                <tbody>
-                  ${outputs.length ? outputs.map(output => `
-                    <tr>
-                      <td>${output.productName}</td>
-                      <td>${output.quantity}</td>
-                      <td>${output.date}</td>
-                      <td>${output.reason || '-'}</td>
-                      <td>${output.notes || '-'}</td>
-                    </tr>
-                  `).join('') : `
-                    <tr><td colspan="5" class="text-center text-muted">No hay salidas registradas</td></tr>
-                  `}
-                </tbody>
-              </table>
-            </div>
+                `).join('') : `
+                  <tr><td colspan="5" class="text-center text-muted">No hay salidas registradas</td></tr>
+                `}
+              </tbody>
+            </table>
           </div>
         </div>
       `;
 
       tabContent.innerHTML = html;
 
-      // Reinicializar tooltips
-      document.querySelectorAll('[title]').forEach(el => new bootstrap.Tooltip(el));
+      document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => new bootstrap.Tooltip(el));
 
     } catch (error) {
       console.error("Error al cargar movimientos:", error);
@@ -480,35 +575,6 @@ class UIController {
         </div>
       `;
     }
-  }
-
-  static setupEntryFormListener() {
-    const form = document.getElementById('entradaForm');
-    if (!form) return;
-
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      const productId = document.getElementById('productoSelect').value;
-      const supplierId = document.getElementById('proveedorSelect').value;
-      const quantity = document.getElementById('cantidadEntrada').value;
-      const date = document.getElementById('fechaEntrada').value;
-      const notes = document.getElementById('notasEntrada').value;
-
-      if (!productId || !supplierId || !quantity || !date) {
-        Swal.fire('Error', 'Todos los campos son obligatorios', 'error');
-        return;
-      }
-
-      try {
-        await MovementController.addEntry({ productId, supplierId, quantity, date, notes });
-        Swal.fire('Éxito', 'Entrada registrada correctamente', 'success');
-        form.reset();
-      } catch (error) {
-        console.error('Error al guardar entrada:', error);
-        Swal.fire('Error', 'No se pudo registrar la entrada', 'error');
-      }
-    });
   }
 
   static async loadLowStockTable() {
