@@ -26,47 +26,46 @@ class ProductController {
 }
 
   static async add(product) {
-    try {
-      // Validación
-      if (!product.name || typeof product.name !== 'string') {
-        throw new Error('Nombre del producto inválido');
-      }
-
-      const price = parseFloat(product.price);
-      if (isNaN(price)) {
-        throw new Error('Precio debe ser un número válido');
-      }
-
-      const stock = parseInt(product.stock) || 0;
-
-      const { data, error } = await supabase
-        .from('productos')
-        .insert([{
-          name: product.name.trim(),
-          description: product.description?.trim() || '',
-          category: product.category?.trim() || 'general',
-          price: price,
-          stock: stock
-        }])
-        .select('*');
-
-      if (error) throw error;
-      if (!data || data.length === 0) throw new Error('No se creó el producto');
-
-      return {
-        id: data[0].id,
-        name: data[0].name,
-        description: data[0].description,
-        category: data[0].category,
-        price: parseFloat(data[0].price),
-        stock: parseInt(data[0].stock)
-      };
-      
-    } catch (error) {
-      console.error('Error al agregar producto:', error.message);
-      throw error;
+  try {
+    // Validación mejorada
+    if (!product.name?.trim()) {
+      throw new Error('Nombre del producto es requerido');
     }
+    
+    if (typeof product.price !== 'number' || product.price <= 0) {
+      throw new Error('Precio debe ser un número positivo');
+    }
+
+    const { data, error } = await supabase
+      .from('productos')
+      .insert([{
+        name: product.name.trim(),
+        description: product.description?.trim() || '',
+        category: product.category?.trim() || 'general',
+        price: product.price,
+        stock: product.stock || 0
+      }])
+      .select('*');
+
+    if (error) {
+      console.error('Error de Supabase:', error);
+      throw new Error(error.message || 'Error al guardar en base de datos');
+    }
+
+    if (!data?.length) {
+      throw new Error('No se recibieron datos del servidor');
+    }
+
+    return {
+      id: data[0].id,
+      ...data[0]
+    };
+    
+  } catch (error) {
+    console.error('Error en ProductController.add:', error);
+    throw error;
   }
+}
 
   static async update(id, updatedProduct) {
     try {
