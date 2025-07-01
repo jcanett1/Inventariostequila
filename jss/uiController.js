@@ -68,56 +68,68 @@ class UIController {
 
 
   
-  static async setupSupplierListeners() {
+ static async setupSupplierListeners() {
   const form = document.getElementById("proveedorForm");
-  if (!form) return;
+  if (!form) {
+    console.log("Formulario de proveedor no encontrado - No en página de proveedores");
+    return;
+  }
 
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    
-    const submitBtn = form.querySelector('button[type="submit"]');
+  // Eliminar listener previo para evitar duplicados
+  form.removeEventListener("submit", this.handleSupplierSubmit);
+  form.addEventListener("submit", this.handleSupplierSubmit);
+}
+
+static handleSupplierSubmit = async (e) => {
+  e.preventDefault();
+  
+  const form = e.target;
+  const submitBtn = form.querySelector('button[type="submit"]');
+  
+  try {
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Guardando...';
 
-    try {
-      const newSupplier = {
-        name: document.getElementById("nombreProveedor").value.trim(),
-        contact: document.getElementById("contactoProveedor").value.trim(),
-        email: document.getElementById("emailProveedor").value.trim(),
-        phone: document.getElementById("telefonoProveedor").value.trim(),
-        credit: parseFloat(document.getElementById("creditoProveedor").value) || 0
-      };
+    const newSupplier = {
+      name: document.getElementById("nombreProveedor").value.trim(),
+      contact: document.getElementById("contactoProveedor").value.trim(),
+      email: document.getElementById("emailProveedor").value.trim(),
+      phone: document.getElementById("telefonoProveedor").value.trim(),
+      credit: parseFloat(document.getElementById("creditoProveedor").value) || 0
+    };
 
-      // Validación básica
-      if (!newSupplier.name) {
-        throw new Error('El nombre del proveedor es requerido');
-      }
-
-      const result = await SupplierController.add(newSupplier);
-      console.log('Proveedor agregado:', result);
-      
-      form.reset();
-      await this.loadSuppliersTable();
-      
-      Swal.fire({
-        icon: 'success',
-        title: 'Proveedor agregado',
-        showConfirmButton: false,
-        timer: 1500
-      });
-    } catch (error) {
-      console.error('Error:', error);
-      Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: error.message || 'No se pudo agregar el proveedor'
-      });
-    } finally {
-      submitBtn.disabled = false;
-      submitBtn.textContent = 'Guardar Proveedor';
+    if (!newSupplier.name) {
+      throw new Error('El nombre del proveedor es requerido');
     }
-  });
-}
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newSupplier.email) && newSupplier.email) {
+      throw new Error('El formato del email es inválido');
+    }
+
+    const result = await SupplierController.add(newSupplier);
+    
+    form.reset();
+    await this.loadSuppliersTable();
+    
+    Swal.fire({
+      icon: 'success',
+      title: 'Proveedor agregado',
+      showConfirmButton: false,
+      timer: 1500
+    });
+    
+  } catch (error) {
+    console.error('Error al agregar proveedor:', error);
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: error.message || 'No se pudo agregar el proveedor',
+      footer: 'Verifica los datos e intenta nuevamente'
+    });
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Guardar Proveedor';
+  }
+};
 
 
 
