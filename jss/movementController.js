@@ -12,7 +12,7 @@ class MovementController {
       quantity,
       date,
       notes,
-      productos!inner(nombre),
+      productos!inner(name),     // ✅ Usamos "name" en lugar de "nombre"
       proveedores!inner(name)
     `);
 
@@ -23,8 +23,10 @@ class MovementController {
 
     return data.map(entry => ({
       id: entry.id,
-      productName: entry.productos?.nombre || 'Desconocido', // ✅ Aquí cambiamos ID por NOMBRE
-      supplierName: entry.proveedores?.name || 'Desconocido', // ✅ Aquí cambiamos ID por NOMBRE
+      productId: entry.product_id,
+      productName: entry.productos?.name || 'Desconocido',   // ✅ Aquí usamos "name"
+      supplierId: entry.supplier_id,
+      supplierName: entry.proveedores?.name || 'Desconocido',
       quantity: entry.quantity,
       date: entry.date,
       notes: entry.notes
@@ -40,7 +42,7 @@ class MovementController {
       date,
       reason,
       notes,
-      productos!inner(nombre)
+      productos!inner(name)     // ✅ Usamos "name" en lugar de "nombre"
     `);
 
     if (error) {
@@ -50,7 +52,8 @@ class MovementController {
 
     return data.map(output => ({
       id: output.id,
-      productName: output.productos?.nombre || 'Desconocido', // ✅ Aquí cambiamos ID por NOMBRE
+      productId: output.product_id,
+      productName: output.productos?.name || 'Desconocido',  // ✅ Aquí usamos "name"
       quantity: output.quantity,
       date: output.date,
       reason: output.reason,
@@ -66,7 +69,16 @@ class MovementController {
       quantity: parseInt(entry.quantity),
       date: entry.date,
       notes: entry.notes || ''
-    }]).select();
+    }]).select(`
+      id,
+      product_id,
+      supplier_id,
+      quantity,
+      date,
+      notes,
+      productos!inner(name),
+      proveedores!inner(name)
+    `);
 
     if (error) {
       console.error("Error al guardar entrada:", error.message);
@@ -75,7 +87,9 @@ class MovementController {
 
     return {
       id: data[0].id,
-      productName: data[0].productos?.nombre || 'Desconocido',
+      productId: data[0].product_id,
+      productName: data[0].productos?.name || 'Desconocido',
+      supplierId: data[0].supplier_id,
       supplierName: data[0].proveedores?.name || 'Desconocido',
       quantity: data[0].quantity,
       date: data[0].date,
@@ -91,7 +105,15 @@ class MovementController {
       date: output.date,
       reason: output.reason,
       notes: output.notes || ''
-    }]).select();
+    }]).select(`
+      id,
+      product_id,
+      quantity,
+      date,
+      reason,
+      notes,
+      productos!inner(name)
+    `);
 
     if (error) {
       console.error("Error al guardar salida:", error.message);
@@ -100,7 +122,8 @@ class MovementController {
 
     return {
       id: data[0].id,
-      productName: data[0].productos?.nombre || 'Desconocido',
+      productId: data[0].product_id,
+      productName: data[0].productos?.name || 'Desconocido',
       quantity: data[0].quantity,
       date: data[0].date,
       reason: data[0].reason,
@@ -118,7 +141,7 @@ class MovementController {
         quantity,
         date,
         notes,
-        productos!inner(nombre),
+        productos!inner(name),
         proveedores!inner(name)
       `)
       .gte('date', startDate)
@@ -131,7 +154,9 @@ class MovementController {
 
     return data.map(entry => ({
       id: entry.id,
-      productName: entry.productos?.nombre || 'Desconocido',
+      productId: entry.product_id,
+      productName: entry.productos?.name || 'Desconocido',
+      supplierId: entry.supplier_id,
       supplierName: entry.proveedores?.name || 'Desconocido',
       quantity: entry.quantity,
       date: entry.date,
@@ -149,7 +174,7 @@ class MovementController {
         date,
         reason,
         notes,
-        productos!inner(nombre)
+        productos!inner(name)
       `)
       .gte('date', startDate)
       .lte('date', endDate);
@@ -161,7 +186,8 @@ class MovementController {
 
     return data.map(output => ({
       id: output.id,
-      productName: output.productos?.nombre || 'Desconocido',
+      productId: output.product_id,
+      productName: output.productos?.name || 'Desconocido',
       quantity: output.quantity,
       date: output.date,
       reason: output.reason,
