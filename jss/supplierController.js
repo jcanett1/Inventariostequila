@@ -13,7 +13,7 @@ class SupplierController {
   // Obtener un proveedor por ID
   static async getById(id) {
     const { data, error } = await supabase
-      .from('proveedores')
+      .from('"Proveedores"')
       .select('*')
       .eq('id', id)
       .single();
