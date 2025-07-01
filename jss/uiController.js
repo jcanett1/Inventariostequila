@@ -359,6 +359,55 @@ class UIController {
     }
   }
 
+
+
+
+static setupEntryFormListener() {
+    const form = document.getElementById('entradaForm');
+    if (!form) return;
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const productId = document.getElementById('productoSelect').value;
+      const supplierId = document.getElementById('proveedorSelect').value;
+      const quantity = document.getElementById('cantidadEntrada').value;
+      const date = document.getElementById('fechaEntrada').value;
+      const notes = document.getElementById('notasEntrada').value;
+
+      if (!productId || !supplierId || !quantity || !date) {
+        Swal.fire('Error', 'Todos los campos son obligatorios', 'error');
+        return;
+      }
+
+      try {
+        await MovementController.addEntry({
+          productId,
+          supplierId,
+          quantity,
+          date,
+          notes
+        });
+
+        Swal.fire('Éxito', 'Entrada registrada correctamente', 'success');
+
+        form.reset();
+      } catch (error) {
+        console.error('Error al guardar entrada:', error);
+        Swal.fire('Error', 'No se pudo registrar la entrada', 'error');
+      }
+    });
+  }
+}
+
+
+
+
+
+
+
+
+  
   static async updateMovementsChart(days = 30) {
     try {
       const today = new Date();
