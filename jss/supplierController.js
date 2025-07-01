@@ -28,17 +28,14 @@ class SupplierController {
         throw new Error('Nombre del proveedor es requerido');
       }
 
-      const { data, error } = await supabase
-        .from('proveedores')
-        .insert([{
-          nombre: supplier.name.trim(),
-          contacto: supplier.contact?.trim() || '',
-          correo: supplier.email?.trim() || '',
-          telefono: supplier.phone?.trim() || '',
-          credito: parseFloat(supplier.credit || 0),
-          materiales: supplier.materials?.trim() || ''
-        }])
-        .select();
+      const { data, error } = await supabase.from('proveedores').insert([{
+  name: supplier.name.trim(),
+  contact: supplier.contact?.trim() || '',
+  email: supplier.email?.trim() || '',
+  phone: supplier.phone?.trim() || '',
+  credit: parseFloat(supplier.credit || 0),
+  materials: supplier.materials?.trim() || ''
+}]).select();
 
       if (error) throw error;
       if (!data?.length) throw new Error('No se recibieron datos del servidor');
