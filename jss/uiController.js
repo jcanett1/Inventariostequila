@@ -213,7 +213,9 @@ class UIController {
       `).join("");
 
       // Inicializar tooltips
-      $('[title]').tooltip();
+    document.querySelectorAll('[title]').forEach(el => {
+    new bootstrap.Tooltip(el);
+});
 
     } catch (error) {
       console.error("Error cargando productos:", error);
