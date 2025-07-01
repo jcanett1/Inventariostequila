@@ -62,40 +62,40 @@ class MovementController {
   }
 
   // Añadir una entrada
-  static async addEntry(entry) {
-    const { data, error } = await supabase.from('entradas').insert([{
-      product_id: parseInt(entry.productId),
-      supplier_id: parseInt(entry.supplierId),
-      quantity: parseInt(entry.quantity),
-      date: entry.date,
-      notes: entry.notes || ''
-    }]).select(`
-      id,
-      product_id,
-      supplier_id,
-      quantity,
-      date,
-      notes,
-      productos!inner(name),
-      proveedores!inner(name)
-    `);
+ static async addEntry(entry) {
+  const { data, error } = await supabase.from('entradas').insert([{
+    product_id: entry.productId,     // ✅ UUID como string (no uses parseInt)
+    supplier_id: entry.supplierId,   // ✅ UUID como string
+    quantity: parseInt(entry.quantity),
+    date: entry.date,
+    notes: entry.notes || ''
+  }]).select(`
+    id,
+    product_id,
+    supplier_id,
+    quantity,
+    date,
+    notes,
+    productos!inner(name),      // Nombre del producto desde la relación
+    proveedores!inner(name)     // Nombre del proveedor desde la relación
+  `);
 
-    if (error) {
-      console.error("Error al guardar entrada:", error.message);
-      return null;
-    }
-
-    return {
-      id: data[0].id,
-      productId: data[0].product_id,
-      productName: data[0].productos?.name || 'Desconocido',
-      supplierId: data[0].supplier_id,
-      supplierName: data[0].proveedores?.name || 'Desconocido',
-      quantity: data[0].quantity,
-      date: data[0].date,
-      notes: data[0].notes
-    };
+  if (error) {
+    console.error("Error al guardar entrada:", error.message);
+    throw new Error(`No se pudo registrar la entrada: ${error.message}`);
   }
+
+  return {
+    id: data[0].id,
+    productId: data[0].product_id,
+    productName: data[0].productos?.name || 'Desconocido',
+    supplierId: data[0].supplier_id,
+    supplierName: data[0].proveedores?.name || 'Desconocido',
+    quantity: data[0].quantity,
+    date: data[0].date,
+    notes: data[0].notes
+  };
+}
 
   // Añadir una salida
   static async addOutput(output) {
