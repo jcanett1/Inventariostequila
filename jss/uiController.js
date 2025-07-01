@@ -375,9 +375,136 @@ class UIController {
     }
   }
 
+  // uiController.js
+
+import MovementController from './movementController.js';
+
+class UIController {
+  // ... otras funciones ...
+
+  /**
+   * Carga dinámicamente las pestañas de movimientos (Entradas y Salidas)
+   */
   static async loadMovementsTab() {
-    // Implementación pendiente
+    const tabContent = document.getElementById('movementsTabContent');
+    if (!tabContent) return;
+
+    try {
+      tabContent.innerHTML = `
+        <div class="text-center py-4">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Cargando movimientos...</span>
+          </div>
+          <p class="mt-2">Cargando entradas y salidas...</p>
+        </div>
+      `;
+
+      const [entries, outputs] = await Promise.all([
+        MovementController.getAllEntries(),
+        MovementController.getAllOutputs()
+      ]);
+
+      const html = `
+        <!-- Pestañas -->
+        <ul class="nav nav-tabs mb-3" id="movementTabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="entradas-tab" data-bs-toggle="tab" data-bs-target="#entradas" type="button" role="tab" aria-controls="entradas" aria-selected="true">
+              Entradas
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="salidas-tab" data-bs-toggle="tab" data-bs-target="#salidas" type="button" role="tab" aria-controls="salidas" aria-selected="false">
+              Salidas
+            </button>
+          </li>
+        </ul>
+
+        <div class="tab-content" id="movementTabsContent">
+          <!-- Tabla de Entradas -->
+          <div class="tab-pane fade show active" id="entradas" role="tabpanel" aria-labelledby="entradas-tab">
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>Producto</th>
+                    <th>Proveedor</th>
+                    <th>Cantidad</th>
+                    <th>Fecha</th>
+                    <th>Notas</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${entries.length ? entries.map(entry => `
+                    <tr>
+                      <td>${entry.productName}</td>
+                      <td>${entry.supplierName}</td>
+                      <td>${entry.quantity}</td>
+                      <td>${entry.date}</td>
+                      <td>${entry.notes || '-'}</td>
+                    </tr>
+                  `).join('') : `
+                    <tr>
+                      <td colspan="5" class="text-center text-muted">No hay entradas registradas</td>
+                    </tr>
+                  `}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Tabla de Salidas -->
+          <div class="tab-pane fade" id="salidas" role="tabpanel" aria-labelledby="salidas-tab">
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>Producto</th>
+                    <th>Cantidad</th>
+                    <th>Fecha</th>
+                    <th>Motivo</th>
+                    <th>Notas</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${outputs.length ? outputs.map(output => `
+                    <tr>
+                      <td>${output.productName}</td>
+                      <td>${output.quantity}</td>
+                      <td>${output.date}</td>
+                      <td>${output.reason || '-'}</td>
+                      <td>${output.notes || '-'}</td>
+                    </tr>
+                  `).join('') : `
+                    <tr>
+                      <td colspan="5" class="text-center text-muted">No hay salidas registradas</td>
+                    </tr>
+                  `}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+
+      tabContent.innerHTML = html;
+
+      // Reinicializar tooltips o componentes de Bootstrap si usas
+      const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+      [...tooltipTriggerList].map(tooltipEl => new bootstrap.Tooltip(tooltipEl));
+
+    } catch (error) {
+      console.error("Error al cargar movimientos:", error);
+      tabContent.innerHTML = `
+        <div class="alert alert-danger text-center">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          Error al cargar los movimientos: ${error.message}
+        </div>
+      `;
+    }
   }
+}
+
+export default UIController;
 
   static async loadLowStockTable() {
     // Implementación pendiente
