@@ -262,11 +262,11 @@ class UIController {
 
       tbody.innerHTML = suppliers.map(supplier => `
         <tr>
-          <td>${supplier.nombre || "Sin nombre"}</td>
-          <td>${supplier.contacto || "—"}</td>
-          <td>${supplier.correo ? `<a href="mailto:${supplier.correo}">${supplier.correo}</a>` : "—"}</td>
-          <td>${supplier.telefono ? `<a href="tel:${supplier.telefono}">${supplier.telefono}</a>` : "—"}</td>
-          <td class="text-end">$${(supplier.credito || 0).toFixed(2)}</td>
+         <td>${supplier.name || "Sin nombre"}</td>
+<td>${supplier.contact || "—"}</td>
+<td>${supplier.email ? `<a href="mailto:${supplier.email}">${supplier.email}</a>` : "—"}</td>
+<td>${supplier.phone ? `<a href="tel:${supplier.phone}">${supplier.phone}</a>` : "—"}</td>
+<td class="text-end">$${(supplier.credit || 0).toFixed(2)}</td>
           <td class="text-center">
             <div class="btn-group btn-group-sm">
               <button class="btn btn-outline-primary edit-supplier" data-id="${supplier.id}" title="Editar">
