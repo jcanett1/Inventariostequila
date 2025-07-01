@@ -184,29 +184,32 @@ static handleSupplierSubmit = async (e) => {
     ChartController.initMovementsChart(entries, outputs, days);
   }
 
- static async loadSuppliersTable() {
-  try {
-    const tbody = document.getElementById("proveedoresTableBody");
-    if (!tbody) return;
+static async loadSuppliersTable() {
+  const tbody = document.getElementById("proveedoresTableBody");
+  if (!tbody) {
+    console.log("Tabla de proveedores no encontrada");
+    return;
+  }
 
-    // Mostrar estado de carga
+  try {
+    // Mostrar loading state
     tbody.innerHTML = `
       <tr>
-        <td colspan="6" class="text-center">
-          <div class="spinner-border spinner-border-sm text-primary" role="status">
+        <td colspan="6" class="text-center py-4">
+          <div class="spinner-border text-primary" role="status">
             <span class="visually-hidden">Cargando...</span>
           </div>
-          Cargando proveedores...
+          <p class="mt-2">Cargando lista de proveedores...</p>
         </td>
       </tr>
     `;
 
     const suppliers = await SupplierController.getAll();
     
-    if (!suppliers || !suppliers.length) {
+    if (!suppliers?.length) {
       tbody.innerHTML = `
         <tr>
-          <td colspan="6" class="text-center text-muted">
+          <td colspan="6" class="text-center py-4 text-muted">
             No hay proveedores registrados
           </td>
         </tr>
@@ -214,36 +217,40 @@ static handleSupplierSubmit = async (e) => {
       return;
     }
 
+    // Construir tabla
     tbody.innerHTML = suppliers.map(supplier => `
       <tr>
         <td>${supplier.nombre || "Sin nombre"}</td>
-        <td>${supplier.contacto || "Sin contacto"}</td>
-        <td>${supplier.correo || "Sin email"}</td>
-        <td>${supplier.telefono || "Sin teléfono"}</td>
-        <td>$${(supplier.credito || 0).toFixed(2)}</td>
-        <td>
-          <button class="btn btn-sm btn-warning edit-supplier" data-id="${supplier.id}">
-            <i class="fas fa-edit"></i>
-          </button>
-          <button class="btn btn-sm btn-danger delete-supplier" data-id="${supplier.id}">
-            <i class="fas fa-trash"></i>
-          </button>
+        <td>${supplier.contacto || "—"}</td>
+        <td>${supplier.correo ? `<a href="mailto:${supplier.correo}">${supplier.correo}</a>` : "—"}</td>
+        <td>${supplier.telefono ? `<a href="tel:${supplier.telefono}">${supplier.telefono}</a>` : "—"}</td>
+        <td class="text-end">$${(supplier.credito || 0).toFixed(2)}</td>
+        <td class="text-center">
+          <div class="btn-group btn-group-sm">
+            <button class="btn btn-outline-primary edit-supplier" data-id="${supplier.id}" title="Editar">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button class="btn btn-outline-danger delete-supplier" data-id="${supplier.id}" title="Eliminar">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
         </td>
       </tr>
     `).join("");
 
+    // Inicializar tooltips
+    $('[title]').tooltip();
+
   } catch (error) {
     console.error("Error cargando proveedores:", error);
-    const tbody = document.getElementById("proveedoresTableBody");
-    if (tbody) {
-      tbody.innerHTML = `
-        <tr>
-          <td colspan="6" class="text-center text-danger">
-            <i class="fas fa-exclamation-triangle"></i> Error cargando proveedores
-          </td>
-        </tr>
-      `;
-    }
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="6" class="text-center py-4 text-danger">
+          <i class="fas fa-exclamation-circle me-2"></i>
+          Error al cargar los proveedores: ${error.message}
+        </td>
+      </tr>
+    `;
   }
 }
 
