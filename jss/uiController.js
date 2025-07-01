@@ -120,12 +120,13 @@ class UIController {
       submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Guardando...';
 
       const newSupplier = {
-        name: document.getElementById("nombreProveedor").value.trim(),
-        contact: document.getElementById("contactoProveedor").value.trim(),
-        email: document.getElementById("emailProveedor").value.trim(),
-        phone: document.getElementById("telefonoProveedor").value.trim(),
-        credit: parseFloat(document.getElementById("creditoProveedor").value) || 0
-      };
+  name: document.getElementById("nombreProveedor").value.trim(),
+  contact: document.getElementById("contactoProveedor").value.trim(),
+  email: document.getElementById("emailProveedor").value.trim(),
+  phone: document.getElementById("telefonoProveedor").value.trim(),
+  credit: parseFloat(document.getElementById("creditoProveedor").value) || 0,
+  materials: '' // opcional si no lo usas ahora
+};
 
       if (!newSupplier.name) {
         throw new Error('El nombre del proveedor es requerido');
