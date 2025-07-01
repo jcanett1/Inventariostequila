@@ -23,19 +23,34 @@ class SupplierController {
 
   // Añadir un nuevo proveedor
   static async add(supplier) {
+  try {
+    // Validación
+    if (!supplier.name || typeof supplier.name !== 'string') {
+      throw new Error('Nombre del proveedor es requerido');
+    }
+
     const { data, error } = await supabase.from('proveedores').insert([{
-      nombre: supplier.name,
-      contacto: supplier.contact,
-      correo: supplier.email || '',
-      telefono: supplier.phone || '',
+      nombre: supplier.name.trim(),
+      contacto: supplier.contact?.trim() || '',
+      correo: supplier.email?.trim() || '',
+      telefono: supplier.phone?.trim() || '',
       credito: parseFloat(supplier.credit || 0),
-      materiales: supplier.materials || ''
+      materiales: supplier.materials?.trim() || ''
     }]).select();
 
-    if (error) console.error("Error al agregar proveedor:", error.message);
-    return data?.[0] || null;
-  }
+    if (error) throw error;
+    if (!data?.length) throw new Error('No se recibieron datos del servidor');
 
+    return {
+      id: data[0].id,
+      ...data[0]
+    };
+    
+  } catch (error) {
+    console.error('Error en SupplierController.add:', error);
+    throw new Error(error.message || 'Error al agregar proveedor');
+  }
+}
   // Actualizar un proveedor existente
   static async update(id, updatedSupplier) {
     const { data, error } = await supabase.from('proveedores')
