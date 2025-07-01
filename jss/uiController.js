@@ -40,16 +40,17 @@ class UIController {
 }
 
   static async updateCategoryChart() {
-    const products = await ProductController.getAll();
-    const categoryMap = {};
+  const products = await ProductController.getAll();
+  const categoryMap = {};
 
-    products.forEach(p => {
-      if (!categoryMap[p.categoria]) categoryMap[p.categoria] = 0;
-      categoryMap[p.categoria] += p.stock;
-    });
+  products.forEach(p => {
+    const category = p.category || p.categoria; // Usa el campo correcto
+    if (!categoryMap[category]) categoryMap[category] = 0;
+    categoryMap[category] += p.stock;
+  });
 
-    ChartController.initCategoryChart(categoryMap);
-  }
+  ChartController.initCategoryChart(categoryMap);
+}
 
   static async updateMovementsChart(days = 30) {
     const today = new Date();
