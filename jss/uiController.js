@@ -114,8 +114,46 @@ class UIController {
   }
 
   static async loadSuppliersTable() {
-    // Implementa la carga de la tabla de proveedores si es necesario
+  try {
+    const tbody = document.getElementById("proveedoresTableBody");
+    if (!tbody) {
+      console.log("Tabla de proveedores no encontrada - Vista no activa");
+      return;
+    }
+
+    const suppliers = await SupplierController.getAll();
+    
+    if (!suppliers?.length) {
+      tbody.innerHTML = "<tr><td colspan='6'>No hay proveedores registrados</td></tr>";
+      return;
+    }
+
+    tbody.innerHTML = suppliers.map(supplier => `
+      <tr>
+        <td>${supplier.nombre || "Sin nombre"}</td>
+        <td>${supplier.contacto || "Sin contacto"}</td>
+        <td>${supplier.correo || "Sin email"}</td>
+        <td>${supplier.telefono || "Sin teléfono"}</td>
+        <td>$${(supplier.credito || 0).toFixed(2)}</td>
+        <td>
+          <button class="btn btn-sm btn-warning edit-supplier" data-id="${supplier.id}">
+            <i class="fas fa-edit"></i>
+          </button>
+          <button class="btn btn-sm btn-danger delete-supplier" data-id="${supplier.id}">
+            <i class="fas fa-trash"></i>
+          </button>
+        </td>
+      </tr>
+    `).join("");
+
+    // Inicializar tooltips de Bootstrap si es necesario
+    $('[data-bs-toggle="tooltip"]').tooltip();
+    
+  } catch (error) {
+    console.error("Error cargando proveedores:", error);
+    Swal.fire("Error", "No se pudieron cargar los proveedores", "error");
   }
+}
 
   static async loadMovementsTab() {
     // Implementa la carga de la tabla de movimientos si es necesario
