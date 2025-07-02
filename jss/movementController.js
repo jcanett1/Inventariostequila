@@ -265,6 +265,7 @@ class MovementController {
    * @returns {Promise<Array>} Salidas filtradas
    */
   static async getOutputsByDate(startDate, endDate) {
+  try {
     const { data, error } = await supabase
       .from('salidas')
       .select(`
@@ -274,19 +275,29 @@ class MovementController {
         date,
         reason,
         notes,
-        productos:product_id(name)
+        productos!salidas_product_id_fkey(name)  // Especifica la relación exacta
       `)
       .gte('date', startDate)
       .lte('date', endDate)
       .order('date', { ascending: false });
 
-    if (error) {
-      console.error("Error filtrando salidas por fecha:", error.message);
-      throw error;
-    }
+    if (error) throw error;
 
-    return data.map(output => this.formatOutput(output));
+    return data.map(output => ({
+      id: output.id,
+      productId: output.product_id,
+      productName: output.productos?.name || 'Desconocido',
+      quantity: output.quantity,
+      date: output.date,
+      reason: output.reason,
+      notes: output.notes
+    }));
+
+  } catch (error) {
+    console.error("Error filtrando salidas por fecha:", error);
+    throw new Error("No se pudieron filtrar las salidas por fecha");
   }
+}
 
   // Métodos auxiliares de formato
   static formatEntry(entry) {
