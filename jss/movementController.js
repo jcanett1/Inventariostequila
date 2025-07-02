@@ -33,28 +33,40 @@ class MovementController {
    * @param {number} limit - Número máximo de entradas a devolver
    * @returns {Promise<Array>} Lista de entradas recientes
    */
-  static async getRecentEntries(limit = 10) {
-    const { data, error } = await supabase
-      .from('entradas')
-      .select(`
-        id,
-        product_id,
-        supplier_id,
-        quantity,
-        date,
-        notes,
-        productos:product_id(name),
-        proveedores:supplier_id(name)
-      `)
-      .order('date', { ascending: false })
-      .limit(limit);
+ static async getRecentEntries(limit = 10) {
+    try {
+      const { data, error } = await supabase
+        .from('entradas')
+        .select(`
+          id,
+          product_id,
+          supplier_id,
+          quantity,
+          date,
+          notes,
+          productos(name),
+          proveedores(name)
+        `)
+        .order('date', { ascending: false })
+        .limit(limit);
 
-    if (error) {
-      console.error("Error obteniendo entradas recientes:", error.message);
-      throw error;
+      if (error) throw error;
+
+      return data.map(entry => ({
+        id: entry.id,
+        productId: entry.product_id,
+        productName: entry.productos?.name || 'Desconocido',
+        supplierId: entry.supplier_id,
+        supplierName: entry.proveedores?.name || 'Desconocido',
+        quantity: entry.quantity,
+        date: entry.date,
+        notes: entry.notes
+      }));
+
+    } catch (error) {
+      console.error("Error obteniendo entradas recientes:", error);
+      throw new Error("No se pudieron cargar las entradas recientes");
     }
-
-    return data.map(entry => this.formatEntry(entry));
   }
 
   /**
@@ -88,38 +100,39 @@ class MovementController {
    * @param {number} limit - Número máximo de salidas a devolver
    * @returns {Promise<Array>} Lista de salidas recientes
    */
-  static async getRecentOutputs(limit = 10) {
-  try {
-    const { data, error } = await supabase
-      .from('salidas')
-      .select(`
-        id,
-        product_id,
-        quantity,
-        date,
-        reason,
-        notes,
-        productos(name)  // Cambiado de productos!inner(name) a productos(name)
-      `)
-      .order('date', { ascending: false })
-      .limit(limit);
+ static async getRecentOutputs(limit = 10) {
+    try {
+      const { data, error } = await supabase
+        .from('salidas')
+        .select(`
+          id,
+          product_id,
+          quantity,
+          date,
+          reason,
+          notes,
+          productos(name)
+        `)
+        .order('date', { ascending: false })
+        .limit(limit);
 
-    if (error) throw error;
+      if (error) throw error;
 
-    return data.map(output => ({
-      id: output.id,
-      productId: output.product_id,
-      productName: output.productos?.name || 'Desconocido',
-      quantity: output.quantity,
-      date: output.date,
-      reason: output.reason,
-      notes: output.notes
-    }));
-  } catch (error) {
-    console.error("Error obteniendo salidas recientes:", error);
-    throw new Error("No se pudieron cargar las salidas recientes");
+      return data.map(output => ({
+        id: output.id,
+        productId: output.product_id,
+        productName: output.productos?.name || 'Desconocido',
+        quantity: output.quantity,
+        date: output.date,
+        reason: output.reason,
+        notes: output.notes
+      }));
+
+    } catch (error) {
+      console.error("Error obteniendo salidas recientes:", error);
+      throw new Error("No se pudieron cargar las salidas recientes");
+    }
   }
-}
 
   /**
    * Registra una nueva entrada
