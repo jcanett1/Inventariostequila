@@ -526,141 +526,141 @@ class UIController {
   }
 }
 
-static async loadMovementsTab() {
-  try {
-    const tabContent = document.getElementById('movementsTabContent');
-    if (!tabContent) {
-      console.warn('Contenedor de movimientos no encontrado');
-      return;
+ static async loadMovementsTab() {
+    try {
+      // Versión más robusta para encontrar contenedores
+      const tabContent = document.getElementById('movementsTabContent');
+      const entradasBody = document.getElementById('entradasTableBody');
+      const salidasBody = document.getElementById('salidasTableBody');
+
+      if (!tabContent || !entradasBody || !salidasBody) {
+        console.warn('Elementos del DOM no encontrados');
+        return;
+      }
+
+      // Mostrar estado de carga
+      entradasBody.innerHTML = this.createLoadingRow();
+      salidasBody.innerHTML = this.createLoadingRow();
+
+      // Obtener datos
+      const [entries, outputs] = await Promise.all([
+        MovementController.getRecentEntries(10),
+        MovementController.getRecentOutputs(10)
+      ]);
+
+      // Renderizar tablas
+      entradasBody.innerHTML = this.createTableRows(entries, 'entry');
+      salidasBody.innerHTML = this.createTableRows(outputs, 'output');
+
+      // Configurar event listeners
+      this.setupMovementDetailButtons();
+
+    } catch (error) {
+      console.error("Error cargando movimientos:", error);
+      
+      // Mostrar error en las tablas afectadas
+      const errorRow = this.createErrorRow(error);
+      document.getElementById('entradasTableBody').innerHTML = errorRow;
+      document.getElementById('salidasTableBody').innerHTML = errorRow;
+      
+      if (typeof Swal !== 'undefined') {
+        Swal.fire('Error', 'No se pudieron cargar los movimientos', 'error');
+      }
     }
+  }
 
-    // Mostrar estado de carga
-    tabContent.innerHTML = `
-      <div class="text-center py-4">
-        <div class="spinner-border text-primary" role="status"></div>
-        <p class="mt-2">Cargando movimientos...</p>
-      </div>
+  // Métodos auxiliares
+  static createLoadingRow() {
+    return `
+      <tr>
+        <td colspan="5" class="text-center py-4">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Cargando...</span>
+          </div>
+        </td>
+      </tr>
     `;
+  }
 
-    const [entries, outputs] = await Promise.all([
-      MovementController.getRecentEntries(),
-      MovementController.getRecentOutputs()
-    ]);
+  static createErrorRow(error) {
+    return `
+      <tr>
+        <td colspan="5" class="text-center text-danger py-4">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          ${error.message || 'Error al cargar datos'}
+        </td>
+      </tr>
+    `;
+  }
 
-    // Renderizar tablas
-    this.renderMovementTable('entradasTableBody', entries, 'entry');
-    this.renderMovementTable('salidasTableBody', outputs, 'output');
-
-  } catch (error) {
-    console.error("Error cargando movimientos:", error);
-    const tabContent = document.getElementById('movementsTabContent');
-    if (tabContent) {
-      tabContent.innerHTML = `
-        <div class="alert alert-danger">
-          Error al cargar movimientos: ${error.message}
-        </div>
+  static createTableRows(data, type) {
+    if (!data || data.length === 0) {
+      return `
+        <tr>
+          <td colspan="5" class="text-center text-muted py-4">
+            No hay ${type === 'entry' ? 'entradas' : 'salidas'} registradas
+          </td>
+        </tr>
       `;
     }
-  }
-}
 
-  
-static createLoaderHTML() {
-  return `
-    <div class="text-center py-4">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">Cargando...</span>
-      </div>
-      <p class="mt-2">Cargando movimientos...</p>
-    </div>
-  `;
-}
-
-static createMovementsHTML(entries, outputs) {
-  return `
-    <ul class="nav nav-tabs mb-3" id="movementTabs" role="tablist">
-      <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="entradas-tab" data-bs-toggle="tab" 
-                data-bs-target="#entradas" type="button" role="tab">
-          Entradas
-        </button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" id="salidas-tab" data-bs-toggle="tab" 
-                data-bs-target="#salidas" type="button" role="tab">
-          Salidas
-        </button>
-      </li>
-    </ul>
-
-    <div class="tab-content">
-      <!-- Entradas -->
-      <div class="tab-pane fade show active" id="entradas" role="tabpanel">
-        ${this.createTableHTML(entries, 'entry')}
-      </div>
-      
-      <!-- Salidas -->
-      <div class="tab-pane fade" id="salidas" role="tabpanel">
-        ${this.createTableHTML(outputs, 'output')}
-      </div>
-    </div>
-  `;
-}
-
-static createTableHTML(data, type) {
-  if (!data || data.length === 0) {
-    return `<div class="alert alert-info">No hay ${type === 'entry' ? 'entradas' : 'salidas'} registradas</div>`;
+    return data.map(item => `
+      <tr>
+        <td>${new Date(item.date).toLocaleDateString()}</td>
+        <td>${item.productName}</td>
+        ${type === 'entry' ? `<td>${item.supplierName}</td>` : `<td>${item.reason}</td>`}
+        <td>${item.quantity}</td>
+        <td>
+          <button class="btn btn-sm btn-outline-primary view-detail" 
+                  data-id="${item.id}" data-type="${type}">
+            <i class="fas fa-eye"></i> Detalles
+          </button>
+        </td>
+      </tr>
+    `).join('');
   }
 
-  return `
-    <div class="table-responsive">
-      <table class="table table-hover">
-        <thead>
-          <tr>
-            <th>Fecha</th>
-            <th>Producto</th>
-            ${type === 'entry' ? '<th>Proveedor</th>' : '<th>Motivo</th>'}
-            <th>Cantidad</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${data.map(item => `
-            <tr>
-              <td>${new Date(item.date).toLocaleDateString()}</td>
-              <td>${item.productName}</td>
-              ${type === 'entry' ? 
-                `<td>${item.supplierName}</td>` : 
-                `<td>${item.reason || 'N/A'}</td>`}
-              <td>${item.quantity}</td>
-              <td>
-                <button class="btn btn-sm btn-outline-primary view-detail" 
-                        data-id="${item.id}" data-type="${type}">
-                  <i class="fas fa-eye"></i>
-                </button>
-              </td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-    </div>
-  `;
-}
-
-static initializeMovementComponents() {
-  // Tooltips
-  const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-  tooltipTriggerList.map(el => new bootstrap.Tooltip(el));
-  
-  // Event listeners para detalles
-  document.querySelectorAll('.view-detail').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const id = btn.dataset.id;
-      const type = btn.dataset.type;
-      await this.showMovementDetails(id, type);
+  static setupMovementDetailButtons() {
+    document.querySelectorAll('.view-detail').forEach(button => {
+      button.addEventListener('click', async () => {
+        const id = button.dataset.id;
+        const type = button.dataset.type;
+        await this.showMovementDetails(id, type);
+      });
     });
-  });
-}
+  }
+
+  static async showMovementDetails(id, type) {
+    try {
+      const movement = await MovementController.getMovementById(id, type);
+      const modal = new bootstrap.Modal(document.getElementById('movementDetailModal'));
+      
+      // Configurar contenido del modal
+      document.getElementById('movementDetailContent').innerHTML = `
+        <div class="row">
+          <div class="col-md-6">
+            <p><strong>Producto:</strong> ${movement.productName}</p>
+            <p><strong>Fecha:</strong> ${new Date(movement.date).toLocaleString()}</p>
+            ${type === 'entry' ? 
+              `<p><strong>Proveedor:</strong> ${movement.supplierName}</p>` : 
+              `<p><strong>Motivo:</strong> ${movement.reason}</p>`}
+          </div>
+          <div class="col-md-6">
+            <p><strong>Cantidad:</strong> ${movement.quantity}</p>
+            <p><strong>Notas:</strong> ${movement.notes || 'Ninguna'}</p>
+          </div>
+        </div>
+      `;
+      
+      modal.show();
+      
+    } catch (error) {
+      console.error("Error mostrando detalles:", error);
+      if (typeof Swal !== 'undefined') {
+        Swal.fire('Error', 'No se pudieron cargar los detalles', 'error');
+      }
+    }
+  }
 
   static async loadLowStockTable() {
     // Implementación pendiente
