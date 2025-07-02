@@ -90,17 +90,19 @@
   </div>
 
   <!-- Script principal como módulo ES6 -->
-  <script type="module">
+ <script type="module">
     // Importación de dependencias
     import $ from 'jquery';
     import * as bootstrap from 'bootstrap';
     import Swal from 'sweetalert2';
     import App from './jss/app.js';
     
-    // Configuración global
+    // Hacer Swal disponible globalmente para compatibilidad
+    window.Swal = Swal;
+    
+    // Configuración global de jQuery y Bootstrap
     window.$ = $;
     window.bootstrap = bootstrap;
-    window.Swal = Swal;
     
     // Inicialización de tooltips
     $(function() {
@@ -122,6 +124,6 @@
         });
       }
     });
-  </script>
+</script>
 </body>
 </html>
