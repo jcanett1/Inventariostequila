@@ -492,28 +492,39 @@ class UIController {
     }
   }
 
-  static async updateMovementsChart(days = 30) {
-    try {
-      const today = new Date();
-      const startDate = new Date(today.getTime() - days * 86400000);
+ static async updateMovementsChart(days = 30) {
+  try {
+    const today = new Date();
+    const startDate = new Date(today.getTime() - days * 86400000);
 
-      const [entries, outputs] = await Promise.all([
-        MovementController.getEntriesByDate(
-          startDate.toISOString().split("T")[0],
-          today.toISOString().split("T")[0]
-        ),
-        MovementController.getOutputsByDate(
-          startDate.toISOString().split("T")[0],
-          today.toISOString().split("T")[0]
-        )
-      ]);
+    const [entries, outputs] = await Promise.all([
+      MovementController.getEntriesByDate(
+        startDate.toISOString().split("T")[0],
+        today.toISOString().split("T")[0]
+      ),
+      MovementController.getOutputsByDate(
+        startDate.toISOString().split("T")[0],
+        today.toISOString().split("T")[0]
+      )
+    ]);
 
-      ChartController.initMovementsChart(entries, outputs, days);
+    if (window.ChartController && typeof window.ChartController.initMovementsChart === 'function') {
+      window.ChartController.initMovementsChart(entries, outputs, days);
+    }
 
-    } catch (error) {
-      console.error("Error actualizando gráfico de movimientos:", error);
+  } catch (error) {
+    console.error("Error actualizando gráfico de movimientos:", error);
+    // Opcional: Mostrar notificación al usuario
+    if (typeof Swal !== 'undefined') {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error en gráfico',
+        text: 'No se pudieron cargar los datos para el gráfico',
+        footer: error.message
+      });
     }
   }
+}
 
 static async loadMovementsTab() {
   try {
