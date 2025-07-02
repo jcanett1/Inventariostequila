@@ -89,6 +89,7 @@ class MovementController {
    * @returns {Promise<Array>} Lista de salidas recientes
    */
   static async getRecentOutputs(limit = 10) {
+  try {
     const { data, error } = await supabase
       .from('salidas')
       .select(`
@@ -98,18 +99,27 @@ class MovementController {
         date,
         reason,
         notes,
-        productos:product_id(name)
+        productos(name)  // Cambiado de productos!inner(name) a productos(name)
       `)
       .order('date', { ascending: false })
       .limit(limit);
 
-    if (error) {
-      console.error("Error obteniendo salidas recientes:", error.message);
-      throw error;
-    }
+    if (error) throw error;
 
-    return data.map(output => this.formatOutput(output));
+    return data.map(output => ({
+      id: output.id,
+      productId: output.product_id,
+      productName: output.productos?.name || 'Desconocido',
+      quantity: output.quantity,
+      date: output.date,
+      reason: output.reason,
+      notes: output.notes
+    }));
+  } catch (error) {
+    console.error("Error obteniendo salidas recientes:", error);
+    throw new Error("No se pudieron cargar las salidas recientes");
   }
+}
 
   /**
    * Registra una nueva entrada
