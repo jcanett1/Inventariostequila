@@ -526,48 +526,99 @@ class UIController {
   }
 }
 
- static async loadMovementsTab() {
-    try {
-      // Versión más robusta para encontrar contenedores
-      const tabContent = document.getElementById('movementsTabContent');
-      const entradasBody = document.getElementById('entradasTableBody');
-      const salidasBody = document.getElementById('salidasTableBody');
+static async loadMovementsTab() {
+  try {
+    const entradasBody = document.getElementById('entradasTableBody');
+    const salidasBody = document.getElementById('salidasTableBody');
 
-      if (!tabContent || !entradasBody || !salidasBody) {
-        console.warn('Elementos del DOM no encontrados');
+    // Mostrar carga
+    const showLoading = (element) => {
+      if (element) element.innerHTML = `
+        <tr>
+          <td colspan="5" class="text-center py-4">
+            <div class="spinner-border text-primary" role="status"></div>
+          </td>
+        </tr>
+      `;
+    };
+
+    showLoading(entradasBody);
+    showLoading(salidasBody);
+
+    // Obtener datos
+    const [entries, outputs] = await Promise.all([
+      MovementController.getRecentEntries(10),
+      MovementController.getRecentOutputs(10)
+    ]);
+
+    // Renderizar directamente
+    const renderTable = (element, data, type) => {
+      if (!element) return;
+      
+      if (!data || data.length === 0) {
+        element.innerHTML = `
+          <tr>
+            <td colspan="5" class="text-center text-muted">
+              No hay ${type === 'entry' ? 'entradas' : 'salidas'}
+            </td>
+          </tr>
+        `;
         return;
       }
 
-      // Mostrar estado de carga
-      entradasBody.innerHTML = this.createLoadingRow();
-      salidasBody.innerHTML = this.createLoadingRow();
+      element.innerHTML = data.map(item => `
+        <tr>
+          <td>${new Date(item.date).toLocaleDateString()}</td>
+          <td>${item.productName}</td>
+          ${type === 'entry' ? `<td>${item.supplierName}</td>` : `<td>${item.reason || '-'}</td>`}
+          <td>${item.quantity}</td>
+          <td>
+            <button class="btn btn-sm btn-outline-primary view-details"
+                    data-id="${item.id}" data-type="${type}">
+              <i class="fas fa-eye"></i>
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    };
 
-      // Obtener datos
-      const [entries, outputs] = await Promise.all([
-        MovementController.getRecentEntries(10),
-        MovementController.getRecentOutputs(10)
-      ]);
+    renderTable(entradasBody, entries, 'entry');
+    renderTable(salidasBody, outputs, 'output');
 
-      // Renderizar tablas
-      entradasBody.innerHTML = this.createTableRows(entries, 'entry');
-      salidasBody.innerHTML = this.createTableRows(outputs, 'output');
+    // Configurar eventos de detalles
+    document.querySelectorAll('.view-details').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.id;
+        const type = btn.dataset.type;
+        await this.showMovementDetails(id, type);
+      });
+    });
 
-      // Configurar event listeners
-      this.setupMovementDetailButtons();
-
-    } catch (error) {
-      console.error("Error cargando movimientos:", error);
-      
-      // Mostrar error en las tablas afectadas
-      const errorRow = this.createErrorRow(error);
-      document.getElementById('entradasTableBody').innerHTML = errorRow;
-      document.getElementById('salidasTableBody').innerHTML = errorRow;
-      
-      if (typeof Swal !== 'undefined') {
-        Swal.fire('Error', 'No se pudieron cargar los movimientos', 'error');
-      }
+  } catch (error) {
+    console.error("Error cargando movimientos:", error);
+    
+    // Mostrar error en ambas tablas
+    const errorHTML = `
+      <tr>
+        <td colspan="5" class="text-center text-danger py-4">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          ${error.message || 'Error al cargar datos'}
+        </td>
+      </tr>
+    `;
+    
+    const entradasBody = document.getElementById('entradasTableBody');
+    const salidasBody = document.getElementById('salidasTableBody');
+    
+    if (entradasBody) entradasBody.innerHTML = errorHTML;
+    if (salidasBody) salidasBody.innerHTML = errorHTML;
+    
+    // Opcional: Mostrar alerta con SweetAlert
+    if (typeof Swal !== 'undefined') {
+      Swal.fire('Error', 'No se pudieron cargar los movimientos', 'error');
     }
   }
+}
 
   // Métodos auxiliares
   static createLoadingRow() {
