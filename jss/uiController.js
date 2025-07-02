@@ -355,12 +355,12 @@ class UIController {
           notes
         });
 
-        Swal.fire('Éxito', 'Entrada registrada correctamente', 'success');
+        alert('Éxito: Entrada registrada');
         form.reset();
         await this.loadMovementsTab(); // Recargar pestaña de movimientos
 
       } catch (error) {
-        console.error('Error al guardar entrada:', error);
+        console.log('Éxito: Entrada registrada', data);
         Swal.fire('Error', 'No se pudo registrar la entrada', 'error');
       }
     });
