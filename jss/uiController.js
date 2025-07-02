@@ -516,38 +516,44 @@ class UIController {
   }
 
 static async loadMovementsTab() {
-  // Buscar el contenedor de varias formas posibles
-  const tabContent = document.getElementById('movementsTabContent') || 
-                    document.querySelector('.tab-content') ||
-                    document.querySelector('#entradas')?.parentElement;
-  
-  if (!tabContent) {
-    console.warn('Contenedor de movimientos no encontrado');
-    return;
-  }
-
   try {
+    const tabContent = document.getElementById('movementsTabContent');
+    if (!tabContent) {
+      console.warn('Contenedor de movimientos no encontrado');
+      return;
+    }
+
     // Mostrar estado de carga
-    tabContent.innerHTML = this.createLoaderHTML();
-    
-    // Obtener datos
+    tabContent.innerHTML = `
+      <div class="text-center py-4">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-2">Cargando movimientos...</p>
+      </div>
+    `;
+
     const [entries, outputs] = await Promise.all([
-      MovementController.getRecentEntries(10),
-      MovementController.getRecentOutputs(10)
+      MovementController.getRecentEntries(),
+      MovementController.getRecentOutputs()
     ]);
 
-    // Renderizar contenido
-    tabContent.innerHTML = this.createMovementsHTML(entries, outputs);
-    
-    // Inicializar componentes
-    this.initializeMovementComponents();
+    // Renderizar tablas
+    this.renderMovementTable('entradasTableBody', entries, 'entry');
+    this.renderMovementTable('salidasTableBody', outputs, 'output');
 
   } catch (error) {
     console.error("Error cargando movimientos:", error);
-    tabContent.innerHTML = this.createErrorHTML(error);
+    const tabContent = document.getElementById('movementsTabContent');
+    if (tabContent) {
+      tabContent.innerHTML = `
+        <div class="alert alert-danger">
+          Error al cargar movimientos: ${error.message}
+        </div>
+      `;
+    }
   }
 }
 
+  
 static createLoaderHTML() {
   return `
     <div class="text-center py-4">
