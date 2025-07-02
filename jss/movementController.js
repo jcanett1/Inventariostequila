@@ -33,7 +33,7 @@ class MovementController {
    * @param {number} limit - Número máximo de entradas a devolver
    * @returns {Promise<Array>} Lista de entradas recientes
    */
- static async getRecentEntries(limit = 10) {
+static async getRecentEntries(limit = 10) {
     try {
       const { data, error } = await supabase
         .from('entradas')
@@ -44,28 +44,19 @@ class MovementController {
           quantity,
           date,
           notes,
-          productos(name),
-          proveedores(name)
+          productos!entradas_product_id_fkey(name),
+          proveedores!entradas_supplier_id_fkey(name)
         `)
         .order('date', { ascending: false })
         .limit(limit);
 
       if (error) throw error;
 
-      return data.map(entry => ({
-        id: entry.id,
-        productId: entry.product_id,
-        productName: entry.productos?.name || 'Desconocido',
-        supplierId: entry.supplier_id,
-        supplierName: entry.proveedores?.name || 'Desconocido',
-        quantity: entry.quantity,
-        date: entry.date,
-        notes: entry.notes
-      }));
+      return data.map(entry => this.formatEntry(entry));
 
     } catch (error) {
       console.error("Error obteniendo entradas recientes:", error);
-      throw new Error("No se pudieron cargar las entradas recientes");
+      throw error;
     }
   }
 
@@ -100,7 +91,8 @@ class MovementController {
    * @param {number} limit - Número máximo de salidas a devolver
    * @returns {Promise<Array>} Lista de salidas recientes
    */
- static async getRecentOutputs(limit = 10) {
+ // Método para obtener salidas recientes
+  static async getRecentOutputs(limit = 10) {
     try {
       const { data, error } = await supabase
         .from('salidas')
@@ -111,26 +103,18 @@ class MovementController {
           date,
           reason,
           notes,
-          productos(name)
+          productos!salidas_product_id_fkey(name)
         `)
         .order('date', { ascending: false })
         .limit(limit);
 
       if (error) throw error;
 
-      return data.map(output => ({
-        id: output.id,
-        productId: output.product_id,
-        productName: output.productos?.name || 'Desconocido',
-        quantity: output.quantity,
-        date: output.date,
-        reason: output.reason,
-        notes: output.notes
-      }));
+      return data.map(output => this.formatOutput(output));
 
     } catch (error) {
       console.error("Error obteniendo salidas recientes:", error);
-      throw new Error("No se pudieron cargar las salidas recientes");
+      throw error;
     }
   }
 
