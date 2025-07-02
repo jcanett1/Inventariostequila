@@ -515,116 +515,134 @@ class UIController {
     }
   }
 
- static async loadMovementsTab() {
-  const tabContent = document.getElementById('movementsTabContent');
+static async loadMovementsTab() {
+  // Buscar el contenedor de varias formas posibles
+  const tabContent = document.getElementById('movementsTabContent') || 
+                    document.querySelector('.tab-content') ||
+                    document.querySelector('#entradas')?.parentElement;
+  
   if (!tabContent) {
-    console.error('Elemento con ID "movementsTabContent" no encontrado');
+    console.warn('Contenedor de movimientos no encontrado');
     return;
   }
 
   try {
-    // Mostrar spinner de carga
-    tabContent.innerHTML = `
-      <div class="text-center py-4">
-        <div class="spinner-border text-primary" role="status"></div>
-        <p class="mt-2">Cargando movimientos...</p>
-      </div>
-    `;
-
+    // Mostrar estado de carga
+    tabContent.innerHTML = this.createLoaderHTML();
+    
     // Obtener datos
     const [entries, outputs] = await Promise.all([
-      MovementController.getAllEntries(),
-      MovementController.getAllOutputs()
+      MovementController.getRecentEntries(10),
+      MovementController.getRecentOutputs(10)
     ]);
 
-    // Debug: Verificar datos recibidos
-    console.log('Entradas recibidas:', entries);
-    console.log('Salidas recibidas:', outputs);
-
-    // Generar HTML
-    tabContent.innerHTML = this.generateMovementsHTML(entries, outputs);
-
-    // Inicializar tooltips
-    this.initializeTooltips();
+    // Renderizar contenido
+    tabContent.innerHTML = this.createMovementsHTML(entries, outputs);
+    
+    // Inicializar componentes
+    this.initializeMovementComponents();
 
   } catch (error) {
-    console.error("Error al cargar movimientos:", error);
-    tabContent.innerHTML = `
-      <div class="alert alert-danger text-center">
-        <i class="fas fa-exclamation-triangle me-2"></i>Error al cargar movimientos: ${error.message}
-      </div>
-    `;
+    console.error("Error cargando movimientos:", error);
+    tabContent.innerHTML = this.createErrorHTML(error);
   }
 }
 
-static generateMovementsHTML(entries, outputs) {
+static createLoaderHTML() {
+  return `
+    <div class="text-center py-4">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Cargando...</span>
+      </div>
+      <p class="mt-2">Cargando movimientos...</p>
+    </div>
+  `;
+}
+
+static createMovementsHTML(entries, outputs) {
   return `
     <ul class="nav nav-tabs mb-3" id="movementTabs" role="tablist">
       <li class="nav-item" role="presentation">
         <button class="nav-link active" id="entradas-tab" data-bs-toggle="tab" 
-                data-bs-target="#entradas" type="button" role="tab" 
-                aria-controls="entradas" aria-selected="true">
+                data-bs-target="#entradas" type="button" role="tab">
           Entradas
         </button>
       </li>
       <li class="nav-item" role="presentation">
         <button class="nav-link" id="salidas-tab" data-bs-toggle="tab" 
-                data-bs-target="#salidas" type="button" role="tab" 
-                aria-controls="salidas" aria-selected="false">
+                data-bs-target="#salidas" type="button" role="tab">
           Salidas
         </button>
       </li>
     </ul>
 
-    <div class="tab-content" id="movementTabsContent">
+    <div class="tab-content">
       <!-- Entradas -->
       <div class="tab-pane fade show active" id="entradas" role="tabpanel">
-        ${this.generateTableHTML(entries, 'entradas')}
+        ${this.createTableHTML(entries, 'entry')}
       </div>
       
       <!-- Salidas -->
       <div class="tab-pane fade" id="salidas" role="tabpanel">
-        ${this.generateTableHTML(outputs, 'salidas')}
+        ${this.createTableHTML(outputs, 'output')}
       </div>
     </div>
   `;
 }
 
-static generateTableHTML(data, type) {
-  const headers = type === 'entradas' 
-    ? '<th>Fecha</th><th>Producto</th><th>Proveedor</th><th>Cantidad</th><th>Notas</th>'
-    : '<th>Fecha</th><th>Producto</th><th>Cantidad</th><th>Motivo</th><th>Notas</th>';
-
-  const rows = data.length ? data.map(item => `
-    <tr>
-      <td>${new Date(item.date).toLocaleDateString()}</td>
-      <td>${item.productName || 'N/A'}</td>
-      ${type === 'entradas' ? `<td>${item.supplierName || 'N/A'}</td>` : ''}
-      <td>${item.quantity}</td>
-      ${type === 'salidas' ? `<td>${item.reason || '-'}</td>` : ''}
-      <td>${item.notes || '-'}</td>
-    </tr>
-  `).join('') : `
-    <tr>
-      <td colspan="5" class="text-center text-muted">
-        No hay ${type === 'entradas' ? 'entradas' : 'salidas'} registradas
-      </td>
-    </tr>
-  `;
+static createTableHTML(data, type) {
+  if (!data || data.length === 0) {
+    return `<div class="alert alert-info">No hay ${type === 'entry' ? 'entradas' : 'salidas'} registradas</div>`;
+  }
 
   return `
-    <table class="table table-hover">
-      <thead><tr>${headers}</tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Producto</th>
+            ${type === 'entry' ? '<th>Proveedor</th>' : '<th>Motivo</th>'}
+            <th>Cantidad</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${data.map(item => `
+            <tr>
+              <td>${new Date(item.date).toLocaleDateString()}</td>
+              <td>${item.productName}</td>
+              ${type === 'entry' ? 
+                `<td>${item.supplierName}</td>` : 
+                `<td>${item.reason || 'N/A'}</td>`}
+              <td>${item.quantity}</td>
+              <td>
+                <button class="btn btn-sm btn-outline-primary view-detail" 
+                        data-id="${item.id}" data-type="${type}">
+                  <i class="fas fa-eye"></i>
+                </button>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
   `;
 }
 
-static initializeTooltips() {
-  const tooltipTriggerList = [].slice.call(
-    document.querySelectorAll('[data-bs-toggle="tooltip"]')
-  );
-  tooltipTriggerList.map(triggerEl => new bootstrap.Tooltip(triggerEl));
+static initializeMovementComponents() {
+  // Tooltips
+  const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+  tooltipTriggerList.map(el => new bootstrap.Tooltip(el));
+  
+  // Event listeners para detalles
+  document.querySelectorAll('.view-detail').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.id;
+      const type = btn.dataset.type;
+      await this.showMovementDetails(id, type);
+    });
+  });
 }
 
   static async loadLowStockTable() {
