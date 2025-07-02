@@ -4,7 +4,7 @@ import ProductController from './productController.js';
 import SupplierController from './supplierController.js';
 import MovementController from './movementController.js';
 import ChartController from './chartController.js';
-import Swal from 'sweetalert2';
+
 
 class UIController {
   static async init() {
