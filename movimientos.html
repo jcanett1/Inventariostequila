@@ -205,29 +205,28 @@
     }
   </script>
 
-  <!-- Módulo principal -->
-  <script type="module">
-    import Swal from 'sweetalert2';
-    import App from './jss/app.js';
-    
-    // Configuración global
-    window.Swal = Swal;
-    
-    // Inicialización de la aplicación
-    document.addEventListener('DOMContentLoaded', () => {
-      try {
-        const app = new App();
-        app.init();
-      } catch (error) {
-        console.error('Error de inicialización:', error);
-        Swal.fire({
+<!-- En la sección de scripts -->
+<script type="module">
+  import Swal from 'sweetalert2';
+  import App from './jss/app.js';
+  
+  // Configuración global
+  window.Swal = Swal;
+  
+  document.addEventListener('DOMContentLoaded', () => {
+    const app = new App();
+    app.init().catch(error => {
+      console.error("Failed to initialize app:", error);
+      if (window.Swal) {
+        window.Swal.fire({
           icon: 'error',
           title: 'Error de aplicación',
-          text: 'No se pudo iniciar el sistema correctamente',
+          text: 'No se pudo iniciar el sistema',
           footer: error.message
         });
       }
     });
-  </script>
+  });
+</script>
 </body>
 </html>
