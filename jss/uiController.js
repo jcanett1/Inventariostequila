@@ -43,51 +43,62 @@ class UIController {
 
   static async setupEventListeners() {
     // Formulario de productos
-    document.getElementById("productoForm")?.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const form = e.target;
-      const submitBtn = form.querySelector('button[type="submit"]');
+document.getElementById("productoForm")?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const form = e.target;
+  const submitBtn = form.querySelector('button[type="submit"]');
 
-      try {
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Guardando...';
+  try {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Guardando...';
 
-        const newProduct = {
-          name: document.getElementById("nombreProducto").value.trim(),
-          description: document.getElementById("descripcionProducto").value.trim(),
-          category: document.getElementById("categoriaProducto").value,
-          price: parseFloat(document.getElementById("precioProducto").value),
-          stock: 0
-        };
+    const newProduct = {
+      name: document.getElementById("nombreProducto").value.trim(),
+      description: document.getElementById("descripcionProducto").value.trim(),
+      category: document.getElementById("categoriaProducto").value,
+      price: parseFloat(document.getElementById("precioProducto").value),
+      stock: 0
+    };
 
-        if (!newProduct.name || isNaN(newProduct.price) || newProduct.price <= 0) {
-          throw new Error('Nombre y precio válido son requeridos');
-        }
+    if (!newProduct.name || isNaN(newProduct.price) || newProduct.price <= 0) {
+      throw new Error('Nombre y precio válido son requeridos');
+    }
 
-        await ProductController.add(newProduct);
-        await this.loadProductsTable();
-        form.reset();
+    // Esperar a que se complete la inserción
+    const addedProduct = await ProductController.add(newProduct);
+    console.log('Producto agregado:', addedProduct); // Verificación
 
-        Swal.fire({
-          icon: 'success',
-          title: 'Producto agregado',
-          showConfirmButton: false,
-          timer: 1500
-        });
+    // Pequeño retraso para asegurar que Supabase haya actualizado
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    // Recargar la tabla
+    await this.loadProductsTable();
+    
+    // Verificar si la tabla se actualizó
+    console.log('Tabla recargada, verificando contenido...');
+    console.log('Elementos en tabla:', document.querySelectorAll('#productosTableBody tr').length);
 
-      } catch (error) {
-        console.error("Error al agregar producto:", error);
-        Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: error.message || 'No se pudo agregar el producto'
-        });
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Guardar Producto';
-      }
+    form.reset();
+
+    Swal.fire({
+      icon: 'success',
+      title: 'Producto agregado',
+      showConfirmButton: false,
+      timer: 1500
     });
 
+  } catch (error) {
+    console.error("Error completo al agregar producto:", error);
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: error.message || 'No se pudo agregar el producto'
+    });
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Guardar Producto';
+  }
+});
     // Eventos de tabla de productos
     document.getElementById("productosTableBody")?.addEventListener("click", async (e) => {
       const deleteBtn = e.target.closest('.delete-product');
