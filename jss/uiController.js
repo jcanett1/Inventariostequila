@@ -163,67 +163,64 @@ class UIController {
     }
   };
 
-  static async loadProductsTable() {
-    const tbody = document.getElementById("productosTableBody");
-    if (!tbody) return;
-
-    try {
-      tbody.innerHTML = `
-        <tr>
-          <td colspan="5" class="text-center py-4">
-            <div class="spinner-border text-primary" role="status"></div>
-            <p class="mt-2">Cargando productos...</p>
-          </td>
-        </tr>
-      `;
-
-      const products = await ProductController.getAll();
-
-      if (!products?.length) {
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="5" class="text-center py-4 text-muted">No hay productos registrados</td>
-          </tr>
-        `;
-        return;
-      }
-
-      tbody.innerHTML = products.map(product => `
-        <tr>
-          <td>${product.name || product.nombre || "Sin nombre"}</td>
-          <td>${product.category || product.categoria || "General"}</td>
-          <td class="text-end">$${(product.price || product.precio || 0).toFixed(2)}</td>
-          <td class="text-center">
-            <span class="badge ${product.stock > 0 ? 'bg-success' : 'bg-danger'}">
-              ${product.stock || 0}
-            </span>
-          </td>
-          <td class="text-center">
-            <div class="btn-group btn-group-sm">
-              <button class="btn btn-outline-primary edit-product" data-id="${product.id}" title="Editar">
-                <i class="fas fa-edit"></i>
-              </button>
-              <button class="btn btn-outline-danger delete-product" data-id="${product.id}" title="Eliminar">
-                <i class="fas fa-trash"></i>
-              </button>
-            </div>
-          </td>
-        </tr>
-      `).join("");
-
-      document.querySelectorAll('[title]').forEach(el => new bootstrap.Tooltip(el));
-
-    } catch (error) {
-      console.error("Error cargando productos:", error);
-      tbody.innerHTML = `
-        <tr>
-          <td colspan="5" class="text-center py-4 text-danger">
-            <i class="fas fa-exclamation-circle me-2"></i>Error al cargar productos: ${error.message}
-          </td>
-        </tr>
-      `;
-    }
+ static async loadProductsTable() {
+  console.log('Iniciando carga de tabla de productos...');
+  const tbody = document.getElementById("productosTableBody");
+  
+  if (!tbody) {
+    console.error('ERROR CRÍTICO: No se encontró el elemento con ID "productosTableBody"');
+    return;
   }
+
+  try {
+    tbody.innerHTML = this.createLoadingRow();
+
+    console.log('Obteniendo productos de Supabase...');
+    const products = await ProductController.getAll();
+    console.log('Productos obtenidos:', products);
+
+    if (!products?.length) {
+      console.log('No hay productos, mostrando mensaje');
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="5" class="text-center py-4 text-muted">No hay productos registrados</td>
+        </tr>
+      `;
+      return;
+    }
+
+    console.log('Renderizando productos en tabla...');
+    tbody.innerHTML = products.map(product => `
+      <tr>
+        <td>${product.name || "Sin nombre"}</td>
+        <td>${product.category || "General"}</td>
+        <td class="text-end">$${(product.price || 0).toFixed(2)}</td>
+        <td class="text-center">
+          <span class="badge ${product.stock > 0 ? 'bg-success' : 'bg-danger'}">
+            ${product.stock || 0}
+          </span>
+        </td>
+        <td class="text-center">
+          <div class="btn-group btn-group-sm">
+            <button class="btn btn-outline-primary edit-product" data-id="${product.id}" title="Editar">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button class="btn btn-outline-danger delete-product" data-id="${product.id}" title="Eliminar">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `).join("");
+
+    console.log('Tabla renderizada correctamente');
+    document.querySelectorAll('[title]').forEach(el => new bootstrap.Tooltip(el));
+
+  } catch (error) {
+    console.error("Error completo al cargar productos:", error);
+    tbody.innerHTML = this.createErrorRow(error);
+  }
+}
 
   static async loadSuppliersTable() {
     const tbody = document.getElementById("proveedoresTableBody");
