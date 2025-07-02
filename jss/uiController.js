@@ -174,55 +174,83 @@ document.getElementById("productoForm")?.addEventListener("submit", async (e) =>
     }
   };
 
- static async loadProductsTable() {
-  console.log('Iniciando carga de tabla de productos...');
-  const tbody = document.getElementById("productosTableBody");
+static async loadProductsTable() {
+  console.log('[DEBUG] Ejecutando loadProductsTable');
   
+  // Verificación más estricta del elemento
+  const tbody = document.getElementById("productosTableBody");
   if (!tbody) {
-    console.error('ERROR CRÍTICO: No se encontró el elemento con ID "productosTableBody"');
+    console.error('[ERROR CRÍTICO] No se encontró el tbody con ID "productosTableBody"');
+    console.log('[DEBUG] Contenedor table-body:', document.querySelector('.table-responsive tbody'));
     return;
   }
 
   try {
     tbody.innerHTML = this.createLoadingRow();
+    console.log('[DEBUG] Loading row insertado');
 
-    console.log('Obteniendo productos de Supabase...');
     const products = await ProductController.getAll();
-    console.log('Productos obtenidos:', products);
+    console.log('[DEBUG] Productos obtenidos:', products);
 
-    if (!products?.length) {
-      console.log('No hay productos, mostrando mensaje');
-      tbody.innerHTML = `
-        <tr>
-          <td colspan="5" class="text-center py-4 text-muted">No hay productos registrados</td>
-        </tr>
-      `;
+    if (!products || products.length === 0) {
+      tbody.innerHTML = this.createEmptyRow();
+      console.log('[DEBUG] No hay productos, mostrando fila vacía');
       return;
     }
 
-    console.log('Renderizando productos en tabla...');
-    tbody.innerHTML = products.map(product => `
-      <tr>
-        <td>${product.name || "Sin nombre"}</td>
-        <td>${product.category || "General"}</td>
-        <td class="text-end">$${(product.price || 0).toFixed(2)}</td>
-        <td class="text-center">
-          <span class="badge ${product.stock > 0 ? 'bg-success' : 'bg-danger'}">
-            ${product.stock || 0}
-          </span>
-        </td>
-        <td class="text-center">
-          <div class="btn-group btn-group-sm">
-            <button class="btn btn-outline-primary edit-product" data-id="${product.id}" title="Editar">
-              <i class="fas fa-edit"></i>
-            </button>
-            <button class="btn btn-outline-danger delete-product" data-id="${product.id}" title="Eliminar">
-              <i class="fas fa-trash"></i>
-            </button>
-          </div>
-        </td>
-      </tr>
-    `).join("");
+    tbody.innerHTML = this.createProductRows(products);
+    console.log('[DEBUG] Tabla poblada con', products.length, 'productos');
+
+    // Actualizar tooltips
+    document.querySelectorAll('[title]').forEach(el => {
+      new bootstrap.Tooltip(el);
+    });
+
+  } catch (error) {
+    console.error('[ERROR] En loadProductsTable:', error);
+    tbody.innerHTML = this.createErrorRow(error);
+  }
+}
+
+// Métodos auxiliares nuevos
+static createEmptyRow() {
+  return `
+    <tr>
+      <td colspan="5" class="text-center py-4 text-muted">
+        No hay productos registrados
+      </td>
+    </tr>
+  `;
+}
+
+static createProductRows(products) {
+  return products.map(product => `
+    <tr>
+      <td>${product.name || "Sin nombre"}</td>
+      <td>${product.category || "General"}</td>
+      <td class="text-end">$${(product.price || 0).toFixed(2)}</td>
+      <td class="text-center">
+        <span class="badge ${product.stock > 0 ? 'bg-success' : 'bg-danger'}">
+          ${product.stock || 0}
+        </span>
+      </td>
+      <td class="text-center">
+        <div class="btn-group btn-group-sm">
+          <button class="btn btn-outline-primary edit-product" 
+                  data-id="${product.id}" 
+                  title="Editar">
+            <i class="fas fa-edit"></i>
+          </button>
+          <button class="btn btn-outline-danger delete-product" 
+                  data-id="${product.id}" 
+                  title="Eliminar">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      </td>
+    </tr>
+  `).join("");
+}
 
     console.log('Tabla renderizada correctamente');
     document.querySelectorAll('[title]').forEach(el => new bootstrap.Tooltip(el));
