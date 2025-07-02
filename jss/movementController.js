@@ -192,25 +192,31 @@ static async getRecentEntries(limit = 10) {
    * @returns {Promise<Object>} Datos del movimiento
    */
   static async getMovementById(id, type = 'entry') {
-    const tableName = type === 'entry' ? 'entradas' : 'salidas';
-    const selectFields = type === 'entry' ? 
-      `*, productos:product_id(name), proveedores:supplier_id(name)` : 
-      `*, productos:product_id(name)`;
+  const tableName = type === 'entry' ? 'entradas' : 'salidas';
+  const selectFields = type === 'entry' ? 
+    `*, productos!inner(name), proveedores!inner(name)` : 
+    `*, productos!inner(name)`;
 
-    const { data, error } = await supabase
-      .from(tableName)
-      .select(selectFields)
-      .eq('id', id)
-      .single();
+  const { data, error } = await supabase
+    .from(tableName)
+    .select(selectFields)
+    .eq('id', id)
+    .single();
 
-    if (error) {
-      console.error(`Error obteniendo movimiento (${type}):`, error.message);
-      throw error;
-    }
+  if (error) throw error;
 
-    return type === 'entry' ? this.formatEntry(data) : this.formatOutput(data);
-  }
-
+  return {
+    id: data.id,
+    productId: data.product_id,
+    productName: data.productos?.name || 'Desconocido',
+    supplierId: data.supplier_id,
+    supplierName: data.proveedores?.name || 'Desconocido',
+    quantity: data.quantity,
+    date: data.date,
+    reason: data.reason,
+    notes: data.notes
+  };
+}
   /**
    * Filtra entradas por rango de fechas
    * @param {string} startDate - Fecha de inicio (YYYY-MM-DD)
