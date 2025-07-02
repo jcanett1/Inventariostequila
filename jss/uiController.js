@@ -328,43 +328,67 @@ class UIController {
     }
   }
 
-  static async setupEntryFormListener() {
-    const form = document.getElementById('entradaForm');
-    if (!form) return;
+ static async setupEntryFormListener() {
+  const form = document.getElementById('entradaForm');
+  if (!form) return;
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const submitBtn = form.querySelector('button[type="submit"]');
+    
+    try {
+      // Mostrar estado de carga
+      submitBtn.disabled = true;
+      const originalText = submitBtn.innerHTML;
+      submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Procesando...';
 
-      const productId = document.getElementById('productoEntrada').value;
-      const supplierId = document.getElementById('proveedorEntrada').value;
-      const quantity = document.getElementById('cantidadEntrada').value;
-      const date = document.getElementById('fechaEntrada').value;
-      const notes = document.getElementById('notasEntrada').value;
+      // Obtener datos del formulario
+      const entradaData = {
+        productId: document.getElementById('productoEntrada').value,
+        supplierId: document.getElementById('proveedorEntrada').value,
+        quantity: document.getElementById('cantidadEntrada').value,
+        date: document.getElementById('fechaEntrada').value,
+        notes: document.getElementById('notasEntrada').value
+      };
 
-      if (!productId || !supplierId || !quantity || !date) {
-        Swal.fire('Error', 'Todos los campos son obligatorios', 'error');
-        return;
+      // Validación básica
+      if (!entradaData.productId || !entradaData.quantity || !entradaData.date) {
+        throw new Error('Todos los campos marcados con * son obligatorios');
       }
 
-      try {
-        await MovementController.addEntry({
-          productId,
-          supplierId,
-          quantity,
-          date,
-          notes
-        });
+      // Enviar datos al servidor
+      await MovementController.addEntry(entradaData);
 
-        alert('Éxito: Entrada registrada');
+      // Actualizar la interfaz
+      await this.loadMovementsTab();
+      
+      // Mostrar feedback visual
+      const alertDiv = document.createElement('div');
+      alertDiv.className = 'alert alert-success mt-3';
+      alertDiv.textContent = 'Entrada registrada correctamente';
+      form.prepend(alertDiv);
+      
+      // Limpiar formulario después de 2 segundos
+      setTimeout(() => {
+        alertDiv.remove();
         form.reset();
-        await this.loadMovementsTab(); // Recargar pestaña de movimientos
+      }, 2000);
 
-      } catch (error) {
-        console.log('Éxito: Entrada registrada', data);
-        Swal.fire('Error', 'No se pudo registrar la entrada', 'error');
-      }
-    });
-  }
+    } catch (error) {
+      console.error('Error al guardar entrada:', error);
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'alert alert-danger mt-3';
+      errorDiv.textContent = error.message;
+      form.prepend(errorDiv);
+      
+      setTimeout(() => errorDiv.remove(), 3000);
+    } finally {
+      // Restaurar botón
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalText;
+    }
+  });
+}
 
   static async setupOutputFormListener() {
     const form = document.getElementById('salidaForm');
@@ -491,92 +515,117 @@ class UIController {
     }
   }
 
-  static async loadMovementsTab() {
-    const tabContent = document.getElementById('movementsTabContent');
-    if (!tabContent) return;
-
-    try {
-      tabContent.innerHTML = `
-        <div class="text-center py-4">
-          <div class="spinner-border text-primary" role="status"></div>
-          <p class="mt-2">Cargando movimientos...</p>
-        </div>
-      `;
-
-      const [entries, outputs] = await Promise.all([
-        MovementController.getAllEntries(),
-        MovementController.getAllOutputs()
-      ]);
-
-      const html = `
-        <!-- Pestañas -->
-        <ul class="nav nav-tabs mb-3" id="movementTabs" role="tablist">
-          <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="entradas-tab" data-bs-toggle="tab" data-bs-target="#entradas"
-                    type="button" role="tab" aria-controls="entradas" aria-selected="true">Entradas</button>
-          </li>
-          <li class="nav-item" role="presentation">
-            <button class="nav-link" id="salidas-tab" data-bs-toggle="tab" data-bs-target="#salidas"
-                    type="button" role="tab" aria-controls="salidas" aria-selected="false">Salidas</button>
-          </li>
-        </ul>
-
-        <div class="tab-content" id="movementTabsContent">
-          <!-- Entradas -->
-          <div class="tab-pane fade show active" id="entradas" role="tabpanel">
-            <table class="table table-hover">
-              <thead><tr><th>Fecha</th><th>Producto</th><th>Proveedor</th><th>Cantidad</th><th>Notas</th></tr></thead>
-              <tbody>
-                ${entries.length ? entries.map(entry => `
-                  <tr>
-                    <td>${entry.date}</td>
-                    <td>${entry.productName}</td>
-                    <td>${entry.supplierName}</td>
-                    <td>${entry.quantity}</td>
-                    <td>${entry.notes || '-'}</td>
-                  </tr>
-                `).join('') : `
-                  <tr><td colspan="5" class="text-center text-muted">No hay entradas registradas</td></tr>
-                `}
-              </tbody>
-            </table>
-          </div>
-
-          <!-- Salidas -->
-          <div class="tab-pane fade" id="salidas" role="tabpanel">
-            <table class="table table-hover">
-              <thead><tr><th>Fecha</th><th>Producto</th><th>Cantidad</th><th>Motivo</th><th>Notas</th></tr></thead>
-              <tbody>
-                ${outputs.length ? outputs.map(output => `
-                  <tr>
-                    <td>${output.date}</td>
-                    <td>${output.productName}</td>
-                    <td>${output.quantity}</td>
-                    <td>${output.reason || '-'}</td>
-                    <td>${output.notes || '-'}</td>
-                  </tr>
-                `).join('') : `
-                  <tr><td colspan="5" class="text-center text-muted">No hay salidas registradas</td></tr>
-                `}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      `;
-
-      tabContent.innerHTML = html;
-
-      document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => new bootstrap.Tooltip(el));
-
-    } catch (error) {
-      console.error("Error al cargar movimientos:", error);
-      tabContent.innerHTML = `
-        <div class="alert alert-danger text-center">
-          <i class="fas fa-exclamation-triangle me-2"></i>Error al cargar movimientos: ${error.message}
-        </div>
-      `;
-    }
+ static async loadMovementsTab() {
+  const tabContent = document.getElementById('movementsTabContent');
+  if (!tabContent) {
+    console.error('Elemento con ID "movementsTabContent" no encontrado');
+    return;
   }
+
+  try {
+    // Mostrar spinner de carga
+    tabContent.innerHTML = `
+      <div class="text-center py-4">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-2">Cargando movimientos...</p>
+      </div>
+    `;
+
+    // Obtener datos
+    const [entries, outputs] = await Promise.all([
+      MovementController.getAllEntries(),
+      MovementController.getAllOutputs()
+    ]);
+
+    // Debug: Verificar datos recibidos
+    console.log('Entradas recibidas:', entries);
+    console.log('Salidas recibidas:', outputs);
+
+    // Generar HTML
+    tabContent.innerHTML = this.generateMovementsHTML(entries, outputs);
+
+    // Inicializar tooltips
+    this.initializeTooltips();
+
+  } catch (error) {
+    console.error("Error al cargar movimientos:", error);
+    tabContent.innerHTML = `
+      <div class="alert alert-danger text-center">
+        <i class="fas fa-exclamation-triangle me-2"></i>Error al cargar movimientos: ${error.message}
+      </div>
+    `;
+  }
+}
+
+static generateMovementsHTML(entries, outputs) {
+  return `
+    <ul class="nav nav-tabs mb-3" id="movementTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="entradas-tab" data-bs-toggle="tab" 
+                data-bs-target="#entradas" type="button" role="tab" 
+                aria-controls="entradas" aria-selected="true">
+          Entradas
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="salidas-tab" data-bs-toggle="tab" 
+                data-bs-target="#salidas" type="button" role="tab" 
+                aria-controls="salidas" aria-selected="false">
+          Salidas
+        </button>
+      </li>
+    </ul>
+
+    <div class="tab-content" id="movementTabsContent">
+      <!-- Entradas -->
+      <div class="tab-pane fade show active" id="entradas" role="tabpanel">
+        ${this.generateTableHTML(entries, 'entradas')}
+      </div>
+      
+      <!-- Salidas -->
+      <div class="tab-pane fade" id="salidas" role="tabpanel">
+        ${this.generateTableHTML(outputs, 'salidas')}
+      </div>
+    </div>
+  `;
+}
+
+static generateTableHTML(data, type) {
+  const headers = type === 'entradas' 
+    ? '<th>Fecha</th><th>Producto</th><th>Proveedor</th><th>Cantidad</th><th>Notas</th>'
+    : '<th>Fecha</th><th>Producto</th><th>Cantidad</th><th>Motivo</th><th>Notas</th>';
+
+  const rows = data.length ? data.map(item => `
+    <tr>
+      <td>${new Date(item.date).toLocaleDateString()}</td>
+      <td>${item.productName || 'N/A'}</td>
+      ${type === 'entradas' ? `<td>${item.supplierName || 'N/A'}</td>` : ''}
+      <td>${item.quantity}</td>
+      ${type === 'salidas' ? `<td>${item.reason || '-'}</td>` : ''}
+      <td>${item.notes || '-'}</td>
+    </tr>
+  `).join('') : `
+    <tr>
+      <td colspan="5" class="text-center text-muted">
+        No hay ${type === 'entradas' ? 'entradas' : 'salidas'} registradas
+      </td>
+    </tr>
+  `;
+
+  return `
+    <table class="table table-hover">
+      <thead><tr>${headers}</tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
+static initializeTooltips() {
+  const tooltipTriggerList = [].slice.call(
+    document.querySelectorAll('[data-bs-toggle="tooltip"]')
+  );
+  tooltipTriggerList.map(triggerEl => new bootstrap.Tooltip(triggerEl));
+}
 
   static async loadLowStockTable() {
     // Implementación pendiente
